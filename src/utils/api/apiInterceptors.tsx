@@ -1,24 +1,15 @@
 import axios from 'axios';
-import {tokenRefresh} from "../../service/services.tsx";
-import { getEndpointByValue } from "./endpoints.tsx";
-import { useNavigate } from 'react-router-dom';
-let isRefreshing = false;  // 리프레시 토큰 요청 중인지 여부를 나타내는 플래그
-let failedQueue: any[] = [];  // 실패한 요청을 큐에 저장
-
-const processQueue = (error: any, token: string | null = null) => {
-    failedQueue.forEach((cb) => cb(error, token));  // 큐에 있는 모든 실패한 요청을 처리
-    failedQueue = [];
-};
+import {HeaderKeys, ServerConstants} from "./ServerEnum.tsx";
 
 export const jsonPlaceholderRequest = axios.create({
-    baseURL: 'http://localhost:8080',
+    baseURL: ServerConstants.BASE_URL,
     withCredentials: true,
     timeout: 3000,
 });
 
 jsonPlaceholderRequest.interceptors.request.use(
     (config) => {
-        console.log('호출 전 수행할 작업!', config.headers["access"]);
+        console.log('호출 전 수행할 작업!', config.headers[HeaderKeys.Authorization]);
         /*config.headers.Authorization = `Bearer ${localStorage.getItem(
                           'accessToken'
                         )}`;*/

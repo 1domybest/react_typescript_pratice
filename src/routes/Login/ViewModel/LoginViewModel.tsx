@@ -1,29 +1,14 @@
 import { makeAutoObservable } from "mobx";
-import { HomeModel } from "../../DisneyYoutube/Model/HomeModel.tsx";
-import axios from 'axios'
-import {TodoModel} from "../Model/TodoModel.tsx";
-import {forEach} from "react-bootstrap/ElementChildren";
-import {join, login, needToken, tokenTest} from "../../../service/services.tsx";
-import {JoinRequestDTO} from "../Model/api/request/JoinRequestDTO.ts";
+import {join, login} from "../../../service/MemberAPI.tsx";
+import {needToken, tokenTest} from "../../../service/AuthAPI.tsx";
 
-interface Todo {
-    completed: boolean;
-    id: number;
-    title: string;
-    userId: number;
-}
+import {JoinRequestDTO} from "../Model/api/request/JoinRequestDTO.ts";
 
 
 export default class LoginViewModel {
-    todoModelList: TodoModel[] = []; // TodoModel 객체 배열
-    isLoading: boolean = true;
 
     init() {
         console.log("생성됨")
-        // this.fetchTodo()
-        //     .then(() => {
-        //         this.isLoading = false;
-        //     })
     }
 
     deinit() {
@@ -38,7 +23,6 @@ export default class LoginViewModel {
     }
 
     join = async () => {
-        console.log("조인")
         const request: JoinRequestDTO = {
             username: "myUsername",
             password: "myPassword",
@@ -66,8 +50,8 @@ export default class LoginViewModel {
     tokenTest = async () => {
         console.log("tokenTest")
         tokenTest()
-            .then(data => {
-                console.log("tokenTest", data)
+            .then(() => {
+
             })
     }
 
@@ -80,4 +64,3 @@ export default class LoginViewModel {
     }
 }
 
-// export default LoginViewModel = new LoginViewModel();
