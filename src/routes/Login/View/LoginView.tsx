@@ -1,12 +1,28 @@
 import styled from "styled-components";
 import {observer} from "mobx-react-lite";
-import axios from 'axios'
+import LoginViewModel from "../ViewModel/LoginViewModel.tsx";
+
+import {useEffect, useMemo} from "react";
+import { Link } from 'react-router-dom';
 
 
-function LoginView () {
+const LoginView= observer(() => {
+    const vm = useMemo(() => new LoginViewModel(), []);
+
+    useEffect(() => {
+        console.log("View 마운트")
+        return () => {
+            // ViewModel 정리 (필요할 경우)
+            // 메모리 해제
+            console.log("View 언마운트")
+            vm.deinit()
+        };
+    }, []);
+
     return <>
         <Container>
             <MainBox>
+
                 <img id={"logo"} src="/images/logo.svg"/>
                 <LoginBox>
                     <LogoBox>
@@ -25,14 +41,21 @@ function LoginView () {
                         </EmailInput>
 
 
-                        <NextButton>
+                        <NextButton onClick={(event) => {
+                            // vm.join();
+                            event.preventDefault(); // 기본 동작 방지
+                            vm.login();
+                        }}>
                             로그인
                         </NextButton>
 
                         <SNSLoginButtons>
                             <Divider/>
 
-                            <button className={"login-button google"}>
+                            <button className={"login-button google"} onClick={(event) => {
+                                event.preventDefault();
+                                vm.tokenTest();
+                            }}>
 
                                 <img src="/snsLogos/googleLogo.png"/>
 
@@ -73,23 +96,23 @@ function LoginView () {
         </Container>
         {/*푸터*/}
         <Footer>
-            <CompanyInfoA href={"#"}>디즈니+ 이용약관</CompanyInfoA>
-            <CompanyInfoA href={"#"}>디즈니 이용 약관</CompanyInfoA>
-            <CompanyInfoA href={"#"}>취소 및 환불 정책</CompanyInfoA>
-            <CompanyInfoA href={"#"}>사업자 정보</CompanyInfoA>
-            <CompanyInfoA href={"#"}>청소년 보호 정책</CompanyInfoA>
-            <CompanyInfoA href={"#"}>개인정보 수집 및 이용</CompanyInfoA>
-            <CompanyInfoA href={"#"}>개인정보의 제3자 제공 및 국외 이전</CompanyInfoA>
-            <CompanyInfoA href={"#"}>개인정보 처리방침</CompanyInfoA>
-            <CompanyInfoA href={"#"}>개인정보 처리방침 부속서</CompanyInfoA>
-            <CompanyInfoA href={"#"}>관심 기반 광고</CompanyInfoA>
-            <CompanyInfoA href={"#"}>고객센터</CompanyInfoA>
-            <CompanyInfoA href={"#"}>지원되는 기기</CompanyInfoA>
-            <CompanyInfoA href={"#"}>디즈니+ 소개</CompanyInfoA>
-            <CompanyInfoA href={"#"}>© 2025 Disney and its related entities. All Rights Reserved.</CompanyInfoA>
+            <CompanyInfoA to={"/home"}>디즈니+ 이용약관</CompanyInfoA>
+            <CompanyInfoA to={"#"}>디즈니 이용 약관</CompanyInfoA>
+            <CompanyInfoA to={"#"}>취소 및 환불 정책</CompanyInfoA>
+            <CompanyInfoA to={"#"}>사업자 정보</CompanyInfoA>
+            <CompanyInfoA to={"#"}>청소년 보호 정책</CompanyInfoA>
+            <CompanyInfoA to={"#"}>개인정보 수집 및 이용</CompanyInfoA>
+            <CompanyInfoA to={"#"}>개인정보의 제3자 제공 및 국외 이전</CompanyInfoA>
+            <CompanyInfoA to={"#"}>개인정보 처리방침</CompanyInfoA>
+            <CompanyInfoA to={"#"}>개인정보 처리방침 부속서</CompanyInfoA>
+            <CompanyInfoA to={"#"}>관심 기반 광고</CompanyInfoA>
+            <CompanyInfoA to={"#"}>고객센터</CompanyInfoA>
+            <CompanyInfoA to={"#"}>지원되는 기기</CompanyInfoA>
+            <CompanyInfoA to={"#"}>디즈니+ 소개</CompanyInfoA>
+            <CompanyInfoA to={"#"}>© 2025 Disney and its related entities. All Rights Reserved.</CompanyInfoA>
         </Footer>
     </>
-}
+});
 
 const Container = styled.div`
     width: 100vw;
@@ -262,7 +285,7 @@ const Footer = styled.p`
     background-color: white;
 `
 
-const CompanyInfoA = styled.a`
+const CompanyInfoA = styled(Link)`
     color: rgb(95 97 102);
     opacity: 0.8;
     display: inline-block;

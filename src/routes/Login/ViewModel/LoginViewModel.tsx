@@ -1,20 +1,33 @@
 import { makeAutoObservable } from "mobx";
 import { HomeModel } from "../../DisneyYoutube/Model/HomeModel.tsx";
+import axios from 'axios'
+import {TodoModel} from "../Model/TodoModel.tsx";
+import {forEach} from "react-bootstrap/ElementChildren";
+import {getTodoList, join, login, tokenTest} from "../../../service/services.tsx";
+import {JoinRequestDTO} from "../Model/api/request/JoinRequestDTO.ts";
+
+interface Todo {
+    completed: boolean;
+    id: number;
+    title: string;
+    userId: number;
+}
+
 
 export default class LoginViewModel {
-    homeData:HomeModel = new HomeModel("", ""); // Model 데이터를 저장
+    todoModelList: TodoModel[] = []; // TodoModel 객체 배열
     isLoading: boolean = true;
 
     init() {
-        this.fetchHomeData()
-            .then((result) => {
-                this.homeData = result;
-                console.log("성공:", result); // "성공: 데이터 로드 성공!"
-                this.isLoading = false;
-            })
-            .catch((error) => {
-                console.error("실패:", error); // "실패: 데이터 로드 실패!"
-            });
+        console.log("생성됨")
+        // this.fetchTodo()
+        //     .then(() => {
+        //         this.isLoading = false;
+        //     })
+    }
+
+    deinit() {
+        console.log("VM 메모라 해제됨")
     }
 
     constructor() {
@@ -24,20 +37,39 @@ export default class LoginViewModel {
         this.init();
     }
 
-    // 데이터를 로드하는 메서드
-    fetchHomeData = (): Promise<HomeModel> => {
-        return new Promise((resolve, reject) => {
-            setTimeout(() => {
-                console.log("???")
-                resolve(new HomeModel("이름", "내용"));
-                // if (Math.random() < 0.5) {
-                //     resolve(new HomeModel("이름", "내용"));
-                // } else {
-                //     reject("데이터 로드 실패!");
-                // }
-            }, 1000);
-        });
-    };
+    join = async () => {
+        console.log("조인")
+        const request: JoinRequestDTO = {
+            username: "myUsername",
+            password: "myPassword",
+        };
+
+        join(request)
+            .then(data => {
+                console.log("가입 성공", data)
+            })
+    }
+
+    login = async () => {
+        console.log("조인")
+        const request: JoinRequestDTO = {
+            username: "myUsername",
+            password: "myPassword",
+        };
+
+        login(request)
+            .then(data => {
+                console.log("가입 성공", data)
+            })
+    }
+
+    tokenTest = async () => {
+        console.log("tokenTest")
+        tokenTest()
+            .then(data => {
+                console.log("tokenTest", data)
+            })
+    }
 }
 
 // export default LoginViewModel = new LoginViewModel();

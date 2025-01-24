@@ -1,6 +1,7 @@
 import {observer} from "mobx-react-lite";
 import LoginViewModel from "../../Login/ViewModel/LoginViewModel.tsx";
 import styled from "styled-components";
+import {Link} from "react-router-dom";
 
 const DisneyYoutube = observer(() => {
     // const {homeData, isLoading} = LoginViewModel;
@@ -9,7 +10,7 @@ const DisneyYoutube = observer(() => {
             <Content>
                 <CTA>
                     <CTALogoOne src="/images/cta-logo-one.png" alt="cta-logo-one" />
-                    <SignUp> GET ALL THERE </SignUp>
+                    <SignUp to={"/View1"}> GET ALL THERE </SignUp>
                     <Description>Get premier Access to Raya and the Last Dragon for and additional fee with a Disney+ subscription. As of 03/26/21, the price of Disney+ and The Disney Bundle will increase by 1$.</Description>
                     <CTALogoTwo src="/images/cta-logo-two.png" alt="cta-logo-two" />
                 </CTA>
@@ -77,7 +78,7 @@ const CTALogoOne = styled.img`
     width: 100%;
 `
 
-const SignUp = styled.button`
+const SignUp = styled(Link)`
     font-weight: bold;
     color: #f9f9f9;
     background-color: #0063e5;

@@ -6,7 +6,11 @@ import './index.css'
 
 
 createRoot(document.getElementById('root')!).render(
-  <StrictMode>
+    // 배포시 StrictMode 이걸 빼야함
+    // 그이유는
+    // https://s-ryung.tistory.com/1 참고
     <App />
-  </StrictMode>,
+  // <StrictMode>
+  //   <App />
+  // </StrictMode>,
 )
