@@ -62,7 +62,10 @@ const LoginView= observer(() => {
                                 Sign in with Google
                             </button>
 
-                            <button className={"login-button facebook"}>
+                            <button className={"login-button facebook"} onClick={(event) => {
+                                event.preventDefault();
+                                vm.needToken();
+                            }}>
                                 <img src="/snsLogos/facebookLogo.png"/>
                                 Sign in with Facebook
                             </button>

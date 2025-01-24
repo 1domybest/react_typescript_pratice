@@ -3,7 +3,7 @@ import { HomeModel } from "../../DisneyYoutube/Model/HomeModel.tsx";
 import axios from 'axios'
 import {TodoModel} from "../Model/TodoModel.tsx";
 import {forEach} from "react-bootstrap/ElementChildren";
-import {getTodoList, join, login, tokenTest} from "../../../service/services.tsx";
+import {join, login, needToken, tokenTest} from "../../../service/services.tsx";
 import {JoinRequestDTO} from "../Model/api/request/JoinRequestDTO.ts";
 
 interface Todo {
@@ -51,7 +51,7 @@ export default class LoginViewModel {
     }
 
     login = async () => {
-        console.log("조인")
+
         const request: JoinRequestDTO = {
             username: "myUsername",
             password: "myPassword",
@@ -66,6 +66,14 @@ export default class LoginViewModel {
     tokenTest = async () => {
         console.log("tokenTest")
         tokenTest()
+            .then(data => {
+                console.log("tokenTest", data)
+            })
+    }
+
+    needToken = async () => {
+        console.log("tokenTest")
+        needToken()
             .then(data => {
                 console.log("tokenTest", data)
             })
