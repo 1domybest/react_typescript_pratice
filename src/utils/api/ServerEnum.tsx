@@ -4,6 +4,7 @@ export enum ApiEnums {
     TOKEN_REFRESH = '/token-refresh',
     POST_JOIN = '/join',
     POST_LOGIN = '/login',
+    SNS_LOGIN = '/snsLogin',
 };
 
 

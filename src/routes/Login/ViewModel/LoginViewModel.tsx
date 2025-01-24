@@ -1,6 +1,6 @@
 import { makeAutoObservable } from "mobx";
 import {join, login} from "../../../service/MemberAPI.tsx";
-import {needToken, tokenTest} from "../../../service/AuthAPI.tsx";
+import {needToken, snsLogin, tokenTest} from "../../../service/AuthAPI.tsx";
 
 import {JoinRequestDTO} from "../Model/api/request/JoinRequestDTO.ts";
 
@@ -58,6 +58,14 @@ export default class LoginViewModel {
     needToken = async () => {
         console.log("tokenTest")
         needToken()
+            .then(data => {
+                console.log("tokenTest", data)
+            })
+    }
+
+    snsLogin = async () => {
+        console.log("tokenTest")
+        snsLogin()
             .then(data => {
                 console.log("tokenTest", data)
             })
