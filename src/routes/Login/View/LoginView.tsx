@@ -64,7 +64,7 @@ const LoginView= observer(() => {
 
                             <button className={"login-button facebook"} onClick={(event) => {
                                 event.preventDefault();
-                                vm.needToken();
+                                vm.snsLogin();
                             }}>
                                 <img src="/snsLogos/facebookLogo.png"/>
                                 Sign in with Facebook
@@ -72,11 +72,12 @@ const LoginView= observer(() => {
 
                             <button className={"login-button x"} onClick={(event) => {
                                 event.preventDefault();
-                                vm.snsLogin();
+                                vm.getData();
                             }}>
                                 <img src="/snsLogos/xLogo.png"/>
                                 Sign in with X
                             </button>
+
                         </SNSLoginButtons>
 
 

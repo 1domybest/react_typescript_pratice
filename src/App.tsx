@@ -8,6 +8,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 
 import {BrowserRouter as Router, Route, Routes} from 'react-router-dom'
 import LoginView from "./routes/Login/View/LoginView.tsx";
+import LoginModalView from "./routes/Login/View/LoginModalView.tsx";
 
 function App() {
     return (
@@ -18,6 +19,11 @@ function App() {
                     <Routes>
                         <Route path="/" element={
                             <LoginView/>
+                        }>
+                        </Route>
+
+                        <Route path="/login" element={
+                            <LoginModalView/>
                         }>
                         </Route>
 

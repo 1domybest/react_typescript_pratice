@@ -54,17 +54,42 @@ export const tokenTest = async () => {
 
 // 토큰이 정상적으로 처리가 되는지 확인하는 테스트
 export const snsLogin = async () => {
-    const state = Math.random().toString(36).substring(2); // 랜덤 문자열 생성
     const provider:string = "naver"
+    // window.location.href = `http://localhost:8080/oauth2/authorization/${provider}`
+    window.open(
+        "http://localhost:5173/login",
+        "login",
+        "width=400,height=600,top=100,left=100,location=no,resizable=yes,menubar=no,toolbar=no,status=no"
+    );
+
+
+    // try {
+    //     const response = await jsonPlaceholderRequest({
+    //         url: ApiEnums.SNS_LOGIN + `/${provider}`,
+    //         method: HTTP_METHOD.GET,
+    //     });
+    //     console.log("sns Login 응답정보", response)
+    //
+    //     // // 인증 URL을 새 창으로 띄우기
+    //     window.open(response.data, '_blank');
+    // } catch (error) {
+    //     console.error("API 요청 중 오류 발생:", error);
+    //     // 에러 처리 (예: 기본값 반환, 에러 던지기 등)
+    //     return []; // 에러 발생 시 빈 배열 반환
+    // }
+};
+
+export const getData = async () => {
     try {
         const response = await jsonPlaceholderRequest({
-            url: ApiEnums.SNS_LOGIN + `/${provider}?state=${state}`,
+            url: '/my',
             method: HTTP_METHOD.GET,
         });
-        console.log("sns Login 응답정보", response)
 
-        // // 인증 URL을 새 창으로 띄우기
-        window.open(response.data, '_blank');
+        console.log(response);
+
+        alert(response.data)
+        console.log("sns getData 응답정보", response)
     } catch (error) {
         console.error("API 요청 중 오류 발생:", error);
         // 에러 처리 (예: 기본값 반환, 에러 던지기 등)
