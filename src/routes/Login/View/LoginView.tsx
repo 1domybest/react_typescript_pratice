@@ -2,20 +2,24 @@ import styled from "styled-components";
 import {observer} from "mobx-react-lite";
 import LoginViewModel from "../ViewModel/LoginViewModel.tsx";
 
-import {useEffect, useMemo} from "react";
+import {useEffect, useRef} from "react";
 import { Link } from 'react-router-dom';
 
+type LoginViewModelType = ReturnType<typeof LoginViewModel>;
 
 const LoginView= observer(() => {
-    const vm = useMemo(() => new LoginViewModel(), []);
+
+    const vm = useRef<LoginViewModelType | null>(LoginViewModel());
 
     useEffect(() => {
         console.log("View 마운트")
+        vm.current?.init()
         return () => {
             // ViewModel 정리 (필요할 경우)
             // 메모리 해제
             console.log("View 언마운트")
-            vm.deinit()
+            vm.current?.deinit();
+            vm.current = null;
         };
     }, []);
 
@@ -44,7 +48,7 @@ const LoginView= observer(() => {
                         <NextButton onClick={(event) => {
                             // vm.join();
                             event.preventDefault(); // 기본 동작 방지
-                            vm.login();
+                            vm.current?.login();
                         }}>
                             로그인
                         </NextButton>
@@ -54,7 +58,12 @@ const LoginView= observer(() => {
 
                             <button className={"login-button google"} onClick={(event) => {
                                 event.preventDefault();
-                                vm.tokenTest();
+                                console.log("버튼 클릭")
+
+                                // vm.current?.showBottomSheet()
+                                // vm.current?.showBottomSheet()
+                                // vm.current?.showTextAlert()
+                                vm.current?.showBottomSheet()
                             }}>
 
                                 <img src="/snsLogos/googleLogo.png"/>
@@ -64,7 +73,7 @@ const LoginView= observer(() => {
 
                             <button className={"login-button facebook"} onClick={(event) => {
                                 event.preventDefault();
-                                vm.snsLogin();
+                                // vm.current?.snsLogin();
                             }}>
                                 <img src="/snsLogos/facebookLogo.png"/>
                                 Sign in with Facebook
@@ -72,7 +81,7 @@ const LoginView= observer(() => {
 
                             <button className={"login-button x"} onClick={(event) => {
                                 event.preventDefault();
-                                vm.getData();
+                                vm.current?.getData();
                             }}>
                                 <img src="/snsLogos/xLogo.png"/>
                                 Sign in with X

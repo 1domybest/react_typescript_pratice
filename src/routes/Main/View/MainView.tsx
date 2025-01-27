@@ -1,5 +1,5 @@
 import styled from "styled-components";
-
+import { tokenTest } from "../../../service/AuthAPI.tsx"
 // /images/cta-logo-one.png
 // /images/cta-logo-two.png
 // /images/login-background.jpg
@@ -8,7 +8,10 @@ function MainView () {
         <Container>
             <Content>
                 <LogoOne src={"/images/cta-logo-one.png"}></LogoOne>
-                <SignUpButton>
+                <SignUpButton onClick={(event) => {
+                    event.preventDefault();
+                    tokenTest()
+                }}>
                     <span>GET ALL THERE</span>
                 </SignUpButton>
                 <Description>
