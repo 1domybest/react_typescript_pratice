@@ -1,7 +1,6 @@
 import {makeAutoObservable} from "mobx";
 import {NavigateFunction} from "react-router";
 import {tokenRefresh} from "../../../../service/AuthAPI.tsx";
-import CustomBottomSheetObserver from "../../BottomSheetObserver.tsx";
 
 
 class LoginBottomSheetViewModel {
@@ -55,6 +54,7 @@ class LoginBottomSheetViewModel {
             })
             .catch(error => {
                 this.loginFailed(this.pk)
+                console.log(error)
             })
     }
 

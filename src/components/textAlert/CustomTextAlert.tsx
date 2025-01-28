@@ -13,6 +13,7 @@ const CustomTextAlert = observer(({ child, index }: { child: CustomTextAlertMode
     const ref = useRef<HTMLDivElement>(null); // 애니메이션 끝나는 시점을 알기 위한 ref
 
     useEffect(() => {
+        setDidCheck(false)
         return () => {
             console.log("닫힘")
         }

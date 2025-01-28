@@ -13,10 +13,12 @@ const LoginBottomSheet = ({ pk }: { pk: string }) => {
         bottomSheetModel.pk = newPk;
         bottomSheetModel.backgroundColor = "white"
         BottomSheetObserver.showBottomSheet(bottomSheetModel);
+
     }
 
     const closeBottomSheet = () => {
         BottomSheetObserver.closeBottomSheet(pk);
+        console.log(newPk)
     }
 
     return (

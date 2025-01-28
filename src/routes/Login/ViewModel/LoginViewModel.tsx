@@ -1,7 +1,7 @@
 
 import { makeAutoObservable } from "mobx";
 import { join, login } from "../../../service/MemberAPI.tsx";
-import { needToken, snsLogin, getData, tokenTest, tokenRefresh } from "../../../service/AuthAPI.tsx";
+import { needToken, getData, tokenTest } from "../../../service/AuthAPI.tsx";
 import { NavigateFunction } from "react-router";
 import { CustomBottomSheetModel } from "../../../components/CustomBottomSheetModel.tsx";
 import LoginBottomSheet from "../../../components/bottomSheet/LoginBottomSheet.tsx";
@@ -153,7 +153,7 @@ class LoginViewModel {
 
         textAlertModel.leftButtonAction = (bool: boolean) => {
             const newPk: string = crypto.randomUUID() + "asdasd";
-            console.log("왼쪽 버튼 클릭", newPk);
+            console.log("왼쪽 버튼 클릭", newPk, bool);
             const newTextAlertModel: CustomTextAlertModel = new CustomTextAlertModel(newPk);
             newTextAlertModel.backgroundColor = "rgb(0, 0, 0, 0.7)";
             newTextAlertModel.contentBackgroundColor = "white";
@@ -167,7 +167,7 @@ class LoginViewModel {
         };
 
         textAlertModel.rightButtonAction = (bool: boolean) => {
-            console.log("오른쪽 버튼 클릭");
+            console.log("오른쪽 버튼 클릭", bool);
         };
 
         CustomTextAlertObserver.showTextAlert(textAlertModel);

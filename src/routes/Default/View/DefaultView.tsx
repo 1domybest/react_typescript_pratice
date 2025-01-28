@@ -14,7 +14,7 @@ const DefaultView = observer(({ someData }: DefaultViewProps) => {
     const vm = useRef<DefaultViewModel | null>(new DefaultViewModel());
 
     useEffect(() => {
-        console.log("View 마운트")
+        console.log("View 마운트", someData)
         vm.current?.init()
         vm.current?.setNavigate(navigate)
         return () => {
