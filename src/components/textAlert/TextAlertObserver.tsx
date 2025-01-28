@@ -1,6 +1,6 @@
 // UIState.ts
 import { makeAutoObservable } from 'mobx';
-import {CustomTextAlertModel} from "../components/CustomTextAlertModel.tsx";
+import {CustomTextAlertModel} from "../CustomTextAlertModel.tsx";
 
 class TextAlertObserver {
     textAlertList: CustomTextAlertModel[] = [];

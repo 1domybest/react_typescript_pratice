@@ -1,6 +1,6 @@
 // UIState.ts
 import { makeAutoObservable } from 'mobx';
-import {CustomBottomSheetModel} from "../components/CustomBottomSheetModel.tsx";
+import {CustomBottomSheetModel} from "../CustomBottomSheetModel.tsx";
 
 class BottomSheetObserver {
     bottomSheetList: CustomBottomSheetModel[] = [];

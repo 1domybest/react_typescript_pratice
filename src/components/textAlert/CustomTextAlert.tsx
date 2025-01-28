@@ -1,5 +1,5 @@
 import {useState, useEffect, useRef} from 'react';
-import { CustomTextAlertModel } from "../components/CustomTextAlertModel.tsx";
+import { CustomTextAlertModel } from "../CustomTextAlertModel.tsx";
 import {observer} from "mobx-react";
 import TextAlertObserver from "./TextAlertObserver.tsx";
 

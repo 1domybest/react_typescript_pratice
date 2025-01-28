@@ -1,5 +1,5 @@
 import React, {useState, useEffect, useRef} from 'react';
-import { CustomBottomSheetModel } from "../components/CustomBottomSheetModel.tsx";
+import { CustomBottomSheetModel } from "../CustomBottomSheetModel.tsx";
 import {observer} from "mobx-react";
 import BottomSheetObserver from "./BottomSheetObserver.tsx";
 const CustomBottomSheet = observer(({ child, index }: {child: CustomBottomSheetModel; index: number }) => {

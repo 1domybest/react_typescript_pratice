@@ -1,5 +1,5 @@
 // 예시 사용 컴포넌트
-import {CustomBottomSheetModel} from "../components/CustomBottomSheetModel.tsx";
+import {CustomBottomSheetModel} from "../CustomBottomSheetModel.tsx";
 import BottomSheetObserver from "./BottomSheetObserver.tsx";
 import {useState} from "react";
 

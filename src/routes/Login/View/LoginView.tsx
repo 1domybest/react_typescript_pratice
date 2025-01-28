@@ -3,17 +3,17 @@ import {observer} from "mobx-react-lite";
 import LoginViewModel from "../ViewModel/LoginViewModel.tsx";
 
 import {useEffect, useRef} from "react";
-import { Link } from 'react-router-dom';
+import {Link, useNavigate} from 'react-router-dom';
 
-type LoginViewModelType = ReturnType<typeof LoginViewModel>;
 
 const LoginView= observer(() => {
-
-    const vm = useRef<LoginViewModelType | null>(LoginViewModel());
+    const navigate = useNavigate();
+    const vm = useRef<LoginViewModel | null>(new LoginViewModel());
 
     useEffect(() => {
         console.log("View 마운트")
         vm.current?.init()
+        vm.current?.setNavigate(navigate)
         return () => {
             // ViewModel 정리 (필요할 경우)
             // 메모리 해제
@@ -48,7 +48,7 @@ const LoginView= observer(() => {
                         <NextButton onClick={(event) => {
                             // vm.join();
                             event.preventDefault(); // 기본 동작 방지
-                            vm.current?.login();
+                            vm.current?.snsLogin();
                         }}>
                             로그인
                         </NextButton>
