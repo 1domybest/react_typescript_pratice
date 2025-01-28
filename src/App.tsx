@@ -40,7 +40,7 @@ const App = observer(() => {
                         <Route path="/" element={<LoginView />} />
                         <Route path="/oauth2/succeed" element={<OAuth2SucceedView />} />
                         <Route path="/main" element={<MainView someData={""} />} />
-                        <Route path="/env" element={<ENV/>} />
+                        <Route path="/healthcheck/env" element={<ENV/>} />
                     </Routes>
                 </Router>
             </div>
