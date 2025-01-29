@@ -15,43 +15,66 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       
-      - name: Get the health_check value from the HTML
+      - name: Set target IP # 커맨드 이름
         run: |
-          HTML=$(curl -s "http://${{ secrets.REACT_DOCKER_IP }}/healthcheck/env")
-      
-          # HTML 내용 디버깅
-          echo "Fetched HTML: $HTML"
-      
-          # 'blue' 값 추출하기 (멀티라인 대응)
-          STATUS=$(echo "$HTML" | tr -d '\n' | sed -n 's/.*<div class="env">\s*\([^<]*\)\s*<\/div>.*/\1/p')
-      
-          echo "Extracted status: $STATUS"
-      
-          # 값이 비어있는 경우 오류 처리
-          if [ -z "$STATUS" ]; then
-            echo "Error: STATUS is empty"
-            exit 1
-          fi
-      
-          # 'blue'에 따라서 조건 처리
-          if [ "$STATUS" = "blue" ]; then
-            echo "CURRENT_UPSTREAM=react_blue" >> $GITHUB_ENV
+          STATUS=$(curl -o /dev/null -w "%{http_code}" "http://${{ secrets.REACT_DOCKER_IP }}/healthcheck/react_blue")
+          echo $STATUS
+          if [ $STATUS = 404 ]; then
+            CURRENT_UPSTREAM=react_blue
           else
-            echo "CURRENT_UPSTREAM=react_green" >> $GITHUB_ENV
+            CURRENT_UPSTREAM=react_green
           fi
-      
-          if [ "$CURRENT_UPSTREAM" = "react_blue" ]; then
-            echo "CURRENT_PORT=3000" >> $GITHUB_ENV  
+          echo CURRENT_UPSTREAM=$CURRENT_UPSTREAM >> $GITHUB_ENV
+          if [ $CURRENT_UPSTREAM = react_blue ]; then
+            echo "CURRENT_PORT=3000" >> $GITHUB_ENV
             echo "STOPPED_PORT=3001" >> $GITHUB_ENV
             echo "TARGET_UPSTREAM=react_green" >> $GITHUB_ENV
-          elif [ "$CURRENT_UPSTREAM" = "react_green" ]; then
+          elif [ $CURRENT_UPSTREAM = react_green ]; then
             echo "CURRENT_PORT=3001" >> $GITHUB_ENV
             echo "STOPPED_PORT=3000" >> $GITHUB_ENV
             echo "TARGET_UPSTREAM=react_blue" >> $GITHUB_ENV
           else
-            echo "Error: Invalid CURRENT_UPSTREAM"
+            echo "error"
             exit 1
           fi
+          
+      # - name: Get the health_check value from the HTML
+      #   run: |
+      #     HTML=$(curl -s "http://${{ secrets.REACT_DOCKER_IP }}/healthcheck/env")
+      
+      #     # HTML 내용 디버깅
+      #     echo "Fetched HTML: $HTML"
+      
+      #     # 'blue' 값 추출하기 (멀티라인 대응)
+      #     STATUS=$(echo "$HTML" | tr -d '\n' | sed -n 's/.*<div class="env">\s*\([^<]*\)\s*<\/div>.*/\1/p')
+      
+      #     echo "Extracted status: $STATUS"
+      
+      #     # 값이 비어있는 경우 오류 처리
+      #     if [ -z "$STATUS" ]; then
+      #       echo "Error: STATUS is empty"
+      #       exit 1
+      #     fi
+      
+      #     # 'blue'에 따라서 조건 처리
+      #     if [ "$STATUS" = "blue" ]; then
+      #       echo "CURRENT_UPSTREAM=react_blue" >> $GITHUB_ENV
+      #     else
+      #       echo "CURRENT_UPSTREAM=react_green" >> $GITHUB_ENV
+      #     fi
+      
+      #     if [ "$CURRENT_UPSTREAM" = "react_blue" ]; then
+      #       echo "CURRENT_PORT=3000" >> $GITHUB_ENV  
+      #       echo "STOPPED_PORT=3001" >> $GITHUB_ENV
+      #       echo "TARGET_UPSTREAM=react_green" >> $GITHUB_ENV
+      #     elif [ "$CURRENT_UPSTREAM" = "react_green" ]; then
+      #       echo "CURRENT_PORT=3001" >> $GITHUB_ENV
+      #       echo "STOPPED_PORT=3000" >> $GITHUB_ENV
+      #       echo "TARGET_UPSTREAM=react_blue" >> $GITHUB_ENV
+      #     else
+      #       echo "Error: Invalid CURRENT_UPSTREAM"
+      #       exit 1
+      #     fi
 
 
       - name: Login to DockerHub
