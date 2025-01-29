@@ -33,7 +33,7 @@ const LoginView= observer(() => {
                         <img src="/images/disney_logo_icon_2.png"/>
                     </LogoBox>
                     <LoginTitle>
-                        이메일을 입력하세요
+                        이메일을 입력하세요 gdgdgdgdgdgdg
                     </LoginTitle>
                     <Description>
                         MyDisney 계정으로 디즈니+에 로그인하세요. 계정이 없는 경우 계정 생성을 위한 메시지가 표시됩니다.
