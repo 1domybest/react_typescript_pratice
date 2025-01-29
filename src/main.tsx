@@ -7,6 +7,7 @@ const root = document.getElementById("root");
 if (root) {
     const envDiv = document.createElement("div");
     envDiv.className = "env";
+    // @ts-ignore
     envDiv.innerText = import.meta.env.health_check || "unknown";
     root.appendChild(envDiv);
 }
