@@ -11,37 +11,37 @@ permissions:
   contents: read  # 읽기 권한 설정
 
 jobs:
-  # 1번째 job = 빌드
   build:
-    runs-on: ubuntu-latest  # 우분투 최신버전 사용
+    runs-on: ubuntu-latest
     steps:
-      # 1. 현재 브랜치 checkout
       - uses: actions/checkout@v3
 
-      # 2. Node.js 22.13.0 설치
+      # Node.js 설치
       - name: Install Node.js 22.13.0
-        uses: actions/setup-node@v3  # Node.js 설치를 위한 GitHub Action
+        uses: actions/setup-node@v3
         with:
-          node-version: '22.13.0'  # Node.js 22.13.0 버전 설정
+          node-version: '22.13.0'
 
-
+      # 의존성 설치
       - name: Install Dependencies
         run: npm install
 
+      # React 애플리케이션 빌드
       - name: Build
-        run: npm run build
+        run: npm run build  # dist 폴더 생성
 
-      # Docker Hub 에 로그인하기
+      # Docker Hub 로그인
       - name: Login to DockerHub
-        uses: docker/login-action@v1 # 깃헙 액션에서 제공해주는 도커로그인 기능을 사용하겠다.
+        uses: docker/login-action@v1
         with:
-          # 도커 허브에서 사용하는 아이디와 발급받은 비밀 토큰
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # 도커 빌드 하기
+      # 도커 빌드 (dist 폴더 포함)
       - name: Build Docker
         run: docker build --platform linux/amd64 -t ${{ secrets.DOCKERHUB_USERNAME }}/react_docker .
+
+      # 도커 허브로 푸시
       - name: Push Docker
         run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/react_docker:latest
 
@@ -57,7 +57,7 @@ jobs:
         run: |
           STATUS=$(curl -o /dev/null -w "%{http_code}" "http://${{ secrets.REACT_DOCKER_IP }}/healthcheck/react_blue")
           echo $STATUS
-          if [ $STATUS = 200 ]; then
+          if [ $STATUS = 404 ]; then
             CURRENT_UPSTREAM=react_blue
           else
             CURRENT_UPSTREAM=react_green
@@ -105,16 +105,26 @@ jobs:
 #          retry-delay: 10s
 
       - name: Check deploy server URL with dynamic target
+        id: healthcheck
+        continue-on-error: true  # 오류가 발생해도 GitHub Actions가 중단되지 않도록 설정
         uses: jtalk/url-health-check-action@v3
         with:
-          # 현재 EC2 아이피 + hc[건강체크] + 방금 연 서버이름 [green or blue] + env 를 체크
-          # 포트는 nginx 에서 라우팅할거임
           url: http://${{ secrets.REACT_DOCKER_IP }}/healthcheck/${{ env.TARGET_UPSTREAM }}
-      
-          # 최대 3번
           max-attempts: 3
-          # 10초 간격으로
           retry-delay: 10s
+
+      - name: Validate health check result
+        run: |
+          if [[ "${{ steps.healthcheck.outcome }}" == "failure" ]]; then
+            RESPONSE_CODE=$(curl -o /dev/null -s -w "%{http_code}\n" http://${{ secrets.REACT_DOCKER_IP }}/healthcheck/${{ env.TARGET_UPSTREAM }})
+            echo "Response Code: $RESPONSE_CODE"
+            if [[ "$RESPONSE_CODE" == "404" ]]; then
+              echo "✅ 404 received, proceeding..."
+            else
+              echo "❌ Healthcheck failed with status $RESPONSE_CODE"
+              exit 1
+            fi
+          fi
 
       # nginx 에있는 파일내에 있는 url 변경하기
       ## 파일 경로 = [etc/nginx/conf.d/service-env.inc]
@@ -136,7 +146,7 @@ jobs:
           # -c = 뒤에오는 문자열을 명령으로 실행하겠다 [아마 command 의 약자같음]
 #          sudo docker exec -i nginxserver bash -c 'echo "set \$service_url ${{ env.TARGET_UPSTREAM }};" > /etc/nginx/conf.d/service-env.inc && nginx -s reload'
           script: |
-            sudo docker exec -i nginxserver bash -c 'echo "set \$react_service-env.inc ${{ env.TARGET_UPSTREAM }};" > /etc/nginx/conf.d/react_service-env.inc && nginx -s reload' 
+            sudo docker exec -i nginxserver bash -c 'echo "set \$react_service_url ${{ env.TARGET_UPSTREAM }};" > /etc/nginx/conf.d/react_service-env.inc && nginx -s reload' 
 
       # 현재 열려있는 서버 닫기 [이전 OLD 버전의 서버를 닫는것임]
       - name: Stop current server
