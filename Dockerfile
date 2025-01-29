@@ -5,7 +5,7 @@ FROM nginx:stable-alpine
 COPY dist /usr/share/nginx/html
 
 # 3. Nginx 포트 오픈
-EXPOSE 3000
+#EXPOSE 3000
 
 # 4. Nginx 실행
 CMD ["nginx", "-g", "daemon off;"]
