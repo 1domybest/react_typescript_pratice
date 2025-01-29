@@ -2,8 +2,8 @@
 FROM nginx:stable-alpine
 
 # 2. GitHub Actions에서 빌드된 dist 폴더를 Nginx에 복사
+COPY ./defalut.conf /etc/nginx/conf.d/default.conf
 COPY dist /usr/share/nginx/html
-
 # 3. Nginx 포트 오픈
 #EXPOSE 3000
 
@@ -33,7 +33,7 @@ CMD ["nginx", "-g", "daemon off;"]
 #FROM nginx:stable-alpine
 #
 ## 7. 빌드된 파일을 Nginx용으로 복사
+#COPY ./defalut.conf /etc/nginx/conf.d/default.conf
 #COPY --from=build /app/dist /usr/share/nginx/html
-#
 ## 8. Nginx 실행
 #CMD ["nginx", "-g", "daemon off;"]
