@@ -14,16 +14,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-
+      
       - name: Get the health_check value from the HTML
         run: |
-          # HTML 내용 가져오기
           HTML=$(curl -s "http://${{ secrets.REACT_DOCKER_IP }}/healthcheck/env")
       
-          # 'blue' 값 추출하기 (class="env"> 뒤의 값 가져오기)
-          STATUS=$(echo "$HTML" | sed -n 's/.*<div class="env">\([^<]*\)<\/div>.*/\1/p')
+          # HTML 내용 디버깅
+          echo "Fetched HTML: $HTML"
       
-          # 결과 출력
+          # 'blue' 값 추출하기 (멀티라인 대응)
+          STATUS=$(echo "$HTML" | tr -d '\n' | sed -n 's/.*<div class="env">\s*\([^<]*\)\s*<\/div>.*/\1/p')
+      
           echo "Extracted status: $STATUS"
       
           # 값이 비어있는 경우 오류 처리
