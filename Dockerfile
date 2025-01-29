@@ -26,7 +26,7 @@ RUN npm install
 RUN npm install vite
 
 # 5. 환경에 맞는 Vite 빌드 실행 (모드 이름을 ${ENV}로 전달)
-RUN npm vite build --mode ${ENV}
+RUN vite build --mode ${ENV}
 
 # 6. Nginx로 정적 파일을 서빙하는 단계
 FROM nginx:stable-alpine
