@@ -57,7 +57,7 @@ jobs:
         run: |
           STATUS=$(curl -o /dev/null -w "%{http_code}" "http://${{ secrets.REACT_DOCKER_IP }}/healthcheck/react_blue")
           echo $STATUS
-          if [ $STATUS = 200 ]; then
+          if [ $STATUS = 404 ]; then
             CURRENT_UPSTREAM=react_blue
           else
             CURRENT_UPSTREAM=react_green
