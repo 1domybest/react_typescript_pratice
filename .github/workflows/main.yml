@@ -146,7 +146,7 @@ jobs:
           # -c = 뒤에오는 문자열을 명령으로 실행하겠다 [아마 command 의 약자같음]
 #          sudo docker exec -i nginxserver bash -c 'echo "set \$service_url ${{ env.TARGET_UPSTREAM }};" > /etc/nginx/conf.d/service-env.inc && nginx -s reload'
           script: |
-            sudo docker exec -i nginxserver bash -c 'echo "set \$react_service-env.inc ${{ env.TARGET_UPSTREAM }};" > /etc/nginx/conf.d/react_service-env.inc && nginx -s reload' 
+            sudo docker exec -i nginxserver bash -c 'echo "set \$react_service_url ${{ env.TARGET_UPSTREAM }};" > /etc/nginx/conf.d/react_service-env.inc && nginx -s reload' 
 
       # 현재 열려있는 서버 닫기 [이전 OLD 버전의 서버를 닫는것임]
       - name: Stop current server
