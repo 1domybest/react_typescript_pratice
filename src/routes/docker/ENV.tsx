@@ -1,6 +1,12 @@
+
 const ENV = () => {
+    // @ts-ignore
+    // const key = import.meta.env.health_check
     return <>
-        env
+        <div className="env">
+            {/*{key}*/}
+            blue
+        </div>
     </>
 };
 
