@@ -23,10 +23,10 @@ COPY . .
 
 # 4. 의존성 설치 (Vite 포함)
 RUN npm install
-RUN npm install vite
+#RUN npm install vite
 
 # 5. 환경에 맞는 Vite 빌드 실행 (모드 이름을 ${ENV}로 전달)
-RUN vite build --mode ${ENV}
+RUN npm run build --mode ${ENV}
 
 # 6. Nginx로 정적 파일을 서빙하는 단계
 FROM nginx:stable-alpine
