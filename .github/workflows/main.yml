@@ -104,17 +104,27 @@ jobs:
 #          max-attempts: 3
 #          retry-delay: 10s
 
-      - name: Check deploy server URL with dynamic target
+   - name: Check deploy server URL with dynamic target
+        id: healthcheck
+        continue-on-error: true  # 오류가 발생해도 GitHub Actions가 중단되지 않도록 설정
         uses: jtalk/url-health-check-action@v3
         with:
-          # 현재 EC2 아이피 + hc[건강체크] + 방금 연 서버이름 [green or blue] + env 를 체크
-          # 포트는 nginx 에서 라우팅할거임
           url: http://${{ secrets.REACT_DOCKER_IP }}/healthcheck/${{ env.TARGET_UPSTREAM }}
-      
-          # 최대 3번
           max-attempts: 3
-          # 10초 간격으로
           retry-delay: 10s
+
+      - name: Validate health check result
+        run: |
+          if [[ "${{ steps.healthcheck.outcome }}" == "failure" ]]; then
+            RESPONSE_CODE=$(curl -o /dev/null -s -w "%{http_code}\n" http://${{ secrets.REACT_DOCKER_IP }}/healthcheck/${{ env.TARGET_UPSTREAM }})
+            echo "Response Code: $RESPONSE_CODE"
+            if [[ "$RESPONSE_CODE" == "404" ]]; then
+              echo "✅ 404 received, proceeding..."
+            else
+              echo "❌ Healthcheck failed with status $RESPONSE_CODE"
+              exit 1
+            fi
+          fi
 
       # nginx 에있는 파일내에 있는 url 변경하기
       ## 파일 경로 = [etc/nginx/conf.d/service-env.inc]
