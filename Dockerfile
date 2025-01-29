@@ -2,7 +2,7 @@
 FROM nginx:stable-alpine
 
 # 2. GitHub Actions에서 빌드된 dist 폴더를 Nginx에 복사
-COPY defalut.conf /etc/nginx/conf.d/default.conf
+COPY default.conf /etc/nginx/conf.d/default.conf
 COPY dist /usr/share/nginx/html
 # 3. Nginx 포트 오픈
 #EXPOSE 3000
