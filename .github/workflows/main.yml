@@ -1,6 +1,5 @@
 name: CI
 
-# 트리거 설정 (push 또는 pull_request 이벤트)
 on:
   push:
     branches: [ "main" ]
@@ -16,187 +15,107 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      # Node.js 설치
-      - name: Install Node.js 22.13.0
-        uses: actions/setup-node@v3
-        with:
-          node-version: '22.13.0'
+      - name: Get the health_check value from the HTML
+        run: |
+          # HTML 내용 가져오기
+          HTML=$(curl -s "http://${{ secrets.REACT_DOCKER_IP }}/healthcheck/env")
 
-      # 의존성 설치
-      - name: Install Dependencies
-        run: npm install
+          # 'blue' 값 추출하기 (class="env" 안의 텍스트 추출)
+          STATUS=$(echo "$HTML" | grep -oP '(?<=<div class="env">).*?(?=</div>)')
 
-      # React 애플리케이션 빌드
-      - name: Build
-        run: npm run build  # dist 폴더 생성
+          # 결과 출력
+          echo "Extracted status: $STATUS"
 
-      # Docker Hub 로그인
+          # 'blue'에 따라서 조건 처리
+          if [ "$STATUS" = "blue" ]; then
+            echo "CURRENT_UPSTREAM=react_blue" >> $GITHUB_ENV
+          else
+            echo "CURRENT_UPSTREAM=react_green" >> $GITHUB_ENV
+          fi
+
+          if [ "$CURRENT_UPSTREAM" = "react_blue" ]; then
+            echo "CURRENT_PORT=3000" >> $GITHUB_ENV  
+            echo "STOPPED_PORT=3001" >> $GITHUB_ENV
+            echo "TARGET_UPSTREAM=react_green" >> $GITHUB_ENV
+          elif [ "$CURRENT_UPSTREAM" = "react_green" ]; then
+            echo "CURRENT_PORT=3001" >> $GITHUB_ENV
+            echo "STOPPED_PORT=3000" >> $GITHUB_ENV
+            echo "TARGET_UPSTREAM=react_blue" >> $GITHUB_ENV
+          else
+            echo "Error: Invalid CURRENT_UPSTREAM"
+            exit 1
+          fi
+
       - name: Login to DockerHub
         uses: docker/login-action@v1
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # 도커 빌드 (dist 폴더 포함)
       - name: Build Docker
         run: docker build --platform linux/amd64 -t ${{ secrets.DOCKERHUB_USERNAME }}/react_docker .
 
-      # 도커 허브로 푸시
       - name: Push Docker
         run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/react_docker:latest
 
-  # 2번째 Job = 배포하기
-  deploy:
-    # build 가 끝난후에 실행되게 해라
-    needs: build
-    # 우분투의 마지막 최신버전을 사용하겠다
-    runs-on: ubuntu-latest
-    # steps:
-    #   - name: Get the health_check value from the HTML
-    #     run: |
-    #       # HTML 내용 가져오기
-    #       HTML=$(curl -s "http://${{ secrets.REACT_DOCKER_IP }}/healthcheck/react_blue")
-          
-    #       # 'blue' 값 추출하기 (class="env" 안의 텍스트 추출)
-    #       STATUS=$(echo "$HTML" | grep -oP '(?<=<div class="env">).*?(?=</div>)')
-    
-    #       # 결과 출력
-    #       echo "Extracted status: $STATUS"
-    
-    #       # 'blue'에 따라서 조건 처리
-    #       if [ "$STATUS" = "blue" ]; then
-    #         CURRENT_UPSTREAM=react_blue
-    #       else
-    #         CURRENT_UPSTREAM=react_green
-    #       fi
-    
-    #       echo CURRENT_UPSTREAM=$CURRENT_UPSTREAM >> $GITHUB_ENV
-    
-    #       if [ $CURRENT_UPSTREAM = react_blue ]; then
-    #         echo "CURRENT_PORT=3000" >> $GITHUB_ENV
-    #         echo "STOPPED_PORT=3001" >> $GITHUB_ENV
-    #         echo "TARGET_UPSTREAM=react_green" >> $GITHUB_ENV
-    #       elif [ $CURRENT_UPSTREAM = react_green ]; then
-    #         echo "CURRENT_PORT=3001" >> $GITHUB_ENV
-    #         echo "STOPPED_PORT=3000" >> $GITHUB_ENV
-    #         echo "TARGET_UPSTREAM=react_blue" >> $GITHUB_ENV
-    #       else
-    #         echo "error"
-    #         exit 1
-    #       fi
-    steps:
-      # 타겟 IP 설정하기 [현재 열려있는 서버가 블루인지 그린인지 판단하고 열려있는건 닫고 닫혀있는건 열기위한 커맨드]
-      - name: Set target IP # 커맨드 이름
-        run: |
-          STATUS=$(curl -o /dev/null -w "%{http_code}" "http://${{ secrets.REACT_DOCKER_IP }}/healthcheck/react_blue")
-          echo $STATUS
-          if [ $STATUS = 404 ]; then
-            CURRENT_UPSTREAM=react_blue
-          else
-            CURRENT_UPSTREAM=react_green
-          fi
-          echo CURRENT_UPSTREAM=$CURRENT_UPSTREAM >> $GITHUB_ENV
-          if [ $CURRENT_UPSTREAM = react_blue ]; then
-            echo "CURRENT_PORT=3000" >> $GITHUB_ENV
-            echo "STOPPED_PORT=3001" >> $GITHUB_ENV
-            echo "TARGET_UPSTREAM=react_green" >> $GITHUB_ENV
-          elif [ $CURRENT_UPSTREAM = react_green ]; then
-            echo "CURRENT_PORT=3001" >> $GITHUB_ENV
-            echo "STOPPED_PORT=3000" >> $GITHUB_ENV
-            echo "TARGET_UPSTREAM=react_blue" >> $GITHUB_ENV
-          else
-            echo "error"
-            exit 1
-          fi
-
-    # Docker 컴포즈 하기
       - name: Docker compose
-        uses: appleboy/ssh-action@master # 깃헙액션에 제공해주는 appleboy 에있는 ssh-action@master 라는 모듈을 사용하겠다.
+        uses: appleboy/ssh-action@master
         with:
-          # 우분투를 사용하겠다
           username: ubuntu
-          # 액션 시크릿에 저장되어있는 EC2 퍼블릭 탄력적 IP 를 사용하겠다.
           host: ${{ secrets.REACT_DOCKER_IP }}
-          # 액션 시크릿에 저장되어있는 EC2 시크릿키를 사용하겠다.
           key: ${{ secrets.EC2_SSH_KEY }}
-          # 아래 script 가 끝나면 SSH 연결을 종료하겠다.
           script_stop: true
-          # 관리자 권한으로 아까 위에올린 Docker Hub 로 Push 한 파일을 Pull 하겠다.
-#          sudo docker pull ${{ secrets.DOCKERHUB_USERNAME }}/spring_boot_docker:latest
-          # 관리자 권한으로 현재 EC2에 저장되어있는 docker-compose-{blue or green}.yml 을 실행하겠다.
-#          sudo docker-compose -f docker-compose-${{env.TARGET_UPSTREAM}}.yml up -d
           script: |
             sudo docker pull ${{ secrets.DOCKERHUB_USERNAME }}/react_docker:latest
-            sudo docker-compose -f docker-compose-${{env.TARGET_UPSTREAM}}.yml up -d
+            sudo docker-compose -f docker-compose-${{ env.TARGET_UPSTREAM }}.yml up -d
 
-      # 현재 서버 상태 확인
-#      - name: Check deploy server URL
-#        uses: jtalk/url-health-check-action@v3
-#        with:
-#          url: http://${{ secrets.SPRING_BOOT_DOCKER_IP }}:${{env.STOPPED_PORT}}/env
-#          max-attempts: 3
-#          retry-delay: 10s
-
-      - name: Check deploy server URL with dynamic target
-        id: healthcheck
-        continue-on-error: true  # 오류가 발생해도 GitHub Actions가 중단되지 않도록 설정
-        uses: jtalk/url-health-check-action@v3
-        with:
-          url: http://${{ secrets.REACT_DOCKER_IP }}/healthcheck/${{ env.TARGET_UPSTREAM }}
-          max-attempts: 3
-          retry-delay: 10s
-
-      - name: Validate health check result
+      - name: Check if the status matches TARGET_UPSTREAM
+        id: status_check
         run: |
-          if [[ "${{ steps.healthcheck.outcome }}" == "failure" ]]; then
-            RESPONSE_CODE=$(curl -o /dev/null -s -w "%{http_code}\n" http://${{ secrets.REACT_DOCKER_IP }}/healthcheck/${{ env.TARGET_UPSTREAM }})
-            echo "Response Code: $RESPONSE_CODE"
-            if [[ "$RESPONSE_CODE" == "404" ]]; then
-              echo "✅ 404 received, proceeding..."
-            else
-              echo "❌ Healthcheck failed with status $RESPONSE_CODE"
-              exit 1
+          TARGET=${{ env.TARGET_UPSTREAM }}
+          attempt=0
+          STATUS=""
+
+          while [ "$attempt" -lt 3 ]; do
+            # HTML 내용 가져오기
+            HTML=$(curl -s "http://${{ secrets.REACT_DOCKER_IP }}/healthcheck/env")
+            
+            # 'blue' 값 추출하기
+            STATUS=$(echo "$HTML" | grep -oP '(?<=<div class="env">).*?(?=</div>)')
+            
+            # 결과 출력
+            echo "Extracted status: $STATUS"
+            
+            if [ "$STATUS" = "$TARGET" ]; then
+              echo "STATUS matches TARGET_UPSTREAM: $STATUS"
+              exit 0
             fi
-          fi
+            
+            attempt=$((attempt + 1))
+            echo "Attempt $attempt failed. Retrying in 10 seconds..."
+            sleep 10
+          done
 
-      # nginx 에있는 파일내에 있는 url 변경하기
-      ## 파일 경로 = [etc/nginx/conf.d/service-env.inc]
+          echo "STATUS does not match TARGET_UPSTREAM after 3 attempts."
+          exit 1
+
       - name: Change nginx upstream
-        uses: appleboy/ssh-action@master  # 깃헙액션에 제공해주는 appleboy 에있는 ssh-action@master 라는 모듈을 사용하겠다.
+        uses: appleboy/ssh-action@master
         with:
-          # 우분투를 사용하겠다
           username: ubuntu
-          # 액션 시크릿에 저장되어있는 EC2 퍼블릭 탄력적 IP 를 사용하겠다.
           host: ${{ secrets.REACT_DOCKER_IP }}
-          # 액션 시크릿에 저장되어있는 EC2 시크릿키를 사용하겠다.
           key: ${{ secrets.EC2_SSH_KEY }}
-          # 아래 script 가 끝나면 SSH 연결을 종료하겠다.
           script_stop: true
-          # 관리자 권한으로 docker 에 올라와있는 nginx 를 bash 로 열고
-          # 'echo "set \$service_url ${{ env.TARGET_UPSTREAM }};" 이걸
-          #  /etc/nginx/conf.d/service-env.inc 이곳에 덮어쓰겠다.
-          # 그리고 nginx reload 를 하겠다.
-          # -c = 뒤에오는 문자열을 명령으로 실행하겠다 [아마 command 의 약자같음]
-#          sudo docker exec -i nginxserver bash -c 'echo "set \$service_url ${{ env.TARGET_UPSTREAM }};" > /etc/nginx/conf.d/service-env.inc && nginx -s reload'
           script: |
-            sudo docker exec -i nginxserver bash -c 'echo "set \$react_service_url ${{ env.TARGET_UPSTREAM }};" > /etc/nginx/conf.d/react_service-env.inc && nginx -s reload' 
+            sudo docker exec -i nginxserver bash -c 'echo "set \$react_service_url ${{ env.TARGET_UPSTREAM }};" > /etc/nginx/conf.d/react_service-env.inc && nginx -s reload'
 
-      # 현재 열려있는 서버 닫기 [이전 OLD 버전의 서버를 닫는것임]
       - name: Stop current server
         uses: appleboy/ssh-action@master
         with:
-          # 우분투를 사용하겠다
           username: ubuntu
-          # 액션 시크릿에 저장되어있는 EC2 퍼블릭 탄력적 IP 를 사용하겠다.
           host: ${{ secrets.REACT_DOCKER_IP }}
-          # 액션 시크릿에 저장되어있는 EC2 시크릿키를 사용하겠다.
           key: ${{ secrets.EC2_SSH_KEY }}
-          # 아래 script 가 끝나면 SSH 연결을 종료하겠다.
           script_stop: true
-          # 현재 Docker 에 올라와있는 내려가야할 서버를 stop
-#          sudo docker stop ${{env.CURRENT_UPSTREAM}}
-          # 그리고 삭제
-#          sudo docker rm ${{env.CURRENT_UPSTREAM}}
           script: |
-            sudo docker stop ${{env.CURRENT_UPSTREAM}}
-            sudo docker rm ${{env.CURRENT_UPSTREAM}}
+            sudo docker stop ${{ env.CURRENT_UPSTREAM }}
+            sudo docker rm ${{ env.CURRENT_UPSTREAM }}
