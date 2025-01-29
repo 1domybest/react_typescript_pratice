@@ -1,10 +1,11 @@
-# React 개발 서버만 실행
-FROM node:22.13.0-alpine
+# 1. Nginx 기반으로 빌드된 정적 파일 서빙
+FROM nginx:stable-alpine
 
-WORKDIR /app
+# 2. GitHub Actions에서 빌드된 dist 폴더를 Nginx에 복사
+COPY dist /usr/share/nginx/html
 
-COPY package*.json ./
-RUN npm install
+# 3. Nginx 포트 오픈
+EXPOSE 3000
 
-COPY . .
-CMD ["npm", "run", "dev"]
+# 4. Nginx 실행
+CMD ["nginx", "-g", "daemon off;"]
