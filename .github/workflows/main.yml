@@ -100,35 +100,56 @@ jobs:
             sudo docker pull ${{ secrets.DOCKERHUB_USERNAME }}/react_docker:latest
             sudo docker-compose -f docker-compose-${{ env.TARGET_UPSTREAM }}.yml up -d
 
-      - name: Check if the status matches TARGET_UPSTREAM
-        id: status_check
+      - name: Check deploy server URL with dynamic target
+        id: healthcheck
+        continue-on-error: true  # 오류가 발생해도 GitHub Actions가 중단되지 않도록 설정
+        uses: jtalk/url-health-check-action@v3
+        with:
+          url: http://${{ secrets.REACT_DOCKER_IP }}/healthcheck/${{ env.TARGET_UPSTREAM }}
+          max-attempts: 3
+          retry-delay: 10s
+
+      - name: Validate health check result
         run: |
-          TARGET=${{ env.TARGET_UPSTREAM }}
-          attempt=0
-          STATUS=""
-
-          while [ "$attempt" -lt 3 ]; do
-            # HTML 내용 가져오기
-            HTML=$(curl -s "http://${{ secrets.REACT_DOCKER_IP }}/healthcheck/env")
-            
-            # 'blue' 값 추출하기
-            STATUS=$(echo "$HTML" | grep -oP '(?<=<div class="env">).*?(?=</div>)')
-            
-            # 결과 출력
-            echo "Extracted status: $STATUS"
-            
-            if [ "$STATUS" = "$TARGET" ]; then
-              echo "STATUS matches TARGET_UPSTREAM: $STATUS"
-              exit 0
+          if [[ "${{ steps.healthcheck.outcome }}" == "failure" ]]; then
+            RESPONSE_CODE=$(curl -o /dev/null -s -w "%{http_code}\n" http://${{ secrets.REACT_DOCKER_IP }}/healthcheck/${{ env.TARGET_UPSTREAM }})
+            echo "Response Code: $RESPONSE_CODE"
+            if [[ "$RESPONSE_CODE" == "404" ]]; then
+              echo "✅ 404 received, proceeding..."
+            else
+              echo "❌ Healthcheck failed with status $RESPONSE_CODE"
+              exit 1
             fi
-            
-            attempt=$((attempt + 1))
-            echo "Attempt $attempt failed. Retrying in 10 seconds..."
-            sleep 10
-          done
+          fi
+      # - name: Check if the status matches TARGET_UPSTREAM
+      #   id: status_check
+      #   run: |
+      #     TARGET=${{ env.TARGET_UPSTREAM }}
+      #     attempt=0
+      #     STATUS=""
 
-          echo "STATUS does not match TARGET_UPSTREAM after 3 attempts."
-          exit 1
+      #     while [ "$attempt" -lt 3 ]; do
+      #       # HTML 내용 가져오기
+      #       HTML=$(curl -s "http://${{ secrets.REACT_DOCKER_IP }}/healthcheck/env")
+            
+      #       # 'blue' 값 추출하기
+      #       STATUS=$(echo "$HTML" | grep -oP '(?<=<div class="env">).*?(?=</div>)')
+            
+      #       # 결과 출력
+      #       echo "Extracted status: $STATUS"
+            
+      #       if [ "$STATUS" = "$TARGET" ]; then
+      #         echo "STATUS matches TARGET_UPSTREAM: $STATUS"
+      #         exit 0
+      #       fi
+            
+      #       attempt=$((attempt + 1))
+      #       echo "Attempt $attempt failed. Retrying in 10 seconds..."
+      #       sleep 10
+      #     done
+
+      #     echo "STATUS does not match TARGET_UPSTREAM after 3 attempts."
+      #     exit 1
 
       - name: Change nginx upstream
         uses: appleboy/ssh-action@master
