@@ -52,17 +52,26 @@ jobs:
     # 우분투의 마지막 최신버전을 사용하겠다
     runs-on: ubuntu-latest
     steps:
-      # 타겟 IP 설정하기 [현재 열려있는 서버가 블루인지 그린인지 판단하고 열려있는건 닫고 닫혀있는건 열기위한 커맨드]
-      - name: Set target IP # 커맨드 이름
+      - name: Get the health_check value from the HTML
         run: |
-          STATUS=$(curl -o /dev/null -w "%{http_code}" "http://${{ secrets.REACT_DOCKER_IP }}/healthcheck/react_blue")
-          echo $STATUS
-          if [ $STATUS = 404 ]; then
+          # HTML 내용 가져오기
+          HTML=$(curl -s "http://${{ secrets.REACT_DOCKER_IP }}/healthcheck/react_blue")
+          
+          # 'blue' 값 추출하기 (class="env" 안의 텍스트 추출)
+          STATUS=$(echo "$HTML" | grep -oP '(?<=<div class="env">).*?(?=</div>)')
+    
+          # 결과 출력
+          echo "Extracted status: $STATUS"
+    
+          # 'blue'에 따라서 조건 처리
+          if [ "$STATUS" = "blue" ]; then
             CURRENT_UPSTREAM=react_blue
           else
             CURRENT_UPSTREAM=react_green
           fi
+    
           echo CURRENT_UPSTREAM=$CURRENT_UPSTREAM >> $GITHUB_ENV
+    
           if [ $CURRENT_UPSTREAM = react_blue ]; then
             echo "CURRENT_PORT=3000" >> $GITHUB_ENV
             echo "STOPPED_PORT=3001" >> $GITHUB_ENV
@@ -75,6 +84,30 @@ jobs:
             echo "error"
             exit 1
           fi
+    # steps:
+    #   # 타겟 IP 설정하기 [현재 열려있는 서버가 블루인지 그린인지 판단하고 열려있는건 닫고 닫혀있는건 열기위한 커맨드]
+    #   - name: Set target IP # 커맨드 이름
+    #     run: |
+    #       STATUS=$(curl -o /dev/null -w "%{http_code}" "http://${{ secrets.REACT_DOCKER_IP }}/healthcheck/react_blue")
+    #       echo $STATUS
+    #       if [ $STATUS = 404 ]; then
+    #         CURRENT_UPSTREAM=react_blue
+    #       else
+    #         CURRENT_UPSTREAM=react_green
+    #       fi
+    #       echo CURRENT_UPSTREAM=$CURRENT_UPSTREAM >> $GITHUB_ENV
+    #       if [ $CURRENT_UPSTREAM = react_blue ]; then
+    #         echo "CURRENT_PORT=3000" >> $GITHUB_ENV
+    #         echo "STOPPED_PORT=3001" >> $GITHUB_ENV
+    #         echo "TARGET_UPSTREAM=react_green" >> $GITHUB_ENV
+    #       elif [ $CURRENT_UPSTREAM = react_green ]; then
+    #         echo "CURRENT_PORT=3001" >> $GITHUB_ENV
+    #         echo "STOPPED_PORT=3000" >> $GITHUB_ENV
+    #         echo "TARGET_UPSTREAM=react_blue" >> $GITHUB_ENV
+    #       else
+    #         echo "error"
+    #         exit 1
+    #       fi
 
     # Docker 컴포즈 하기
       - name: Docker compose
