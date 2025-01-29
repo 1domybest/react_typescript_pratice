@@ -14,29 +14,107 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      
-      - name: Set target IP # 커맨드 이름
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '16'
+  
+      - name: Install dependencies for Puppeteer
         run: |
-          STATUS=$(curl -o /dev/null -w "%{http_code}" "http://${{ secrets.REACT_DOCKER_IP }}/healthcheck/react_blue")
-          echo $STATUS
-          if [ $STATUS = 404 ]; then
-            CURRENT_UPSTREAM=react_blue
-          else
-            CURRENT_UPSTREAM=react_green
-          fi
-          echo CURRENT_UPSTREAM=$CURRENT_UPSTREAM >> $GITHUB_ENV
-          if [ $CURRENT_UPSTREAM = react_blue ]; then
-            echo "CURRENT_PORT=3000" >> $GITHUB_ENV
-            echo "STOPPED_PORT=3001" >> $GITHUB_ENV
-            echo "TARGET_UPSTREAM=react_green" >> $GITHUB_ENV
-          elif [ $CURRENT_UPSTREAM = react_green ]; then
-            echo "CURRENT_PORT=3001" >> $GITHUB_ENV
-            echo "STOPPED_PORT=3000" >> $GITHUB_ENV
-            echo "TARGET_UPSTREAM=react_blue" >> $GITHUB_ENV
-          else
-            echo "error"
-            exit 1
-          fi
+          sudo apt-get update
+          sudo apt-get install -y \
+            libx11-dev \
+            libgdk-pixbuf2.0-0 \
+            libnss3 \
+            fonts-liberation \
+            libappindicator3-1 \
+            libxss1 \
+            libasound2
+          npm install puppeteer
+
+      - name: Fetch HTML and Extract Status
+        run: |
+          # Puppeteer 스크립트 작성
+          echo "
+          const puppeteer = require('puppeteer');
+  
+          (async () => {
+            const browser = await puppeteer.launch({ headless: true });
+            const page = await browser.newPage();
+            await page.goto('http://${{ secrets.REACT_DOCKER_IP }}/healthcheck/env', { waitUntil: 'domcontentloaded' });
+  
+            // 'div.env' 안의 텍스트 추출
+            const status = await page.$eval('.env', element => element.innerText);
+            console.log('Extracted status:', status);
+  
+            // 상태에 따라 환경 설정
+            let currentUpstream;
+            let currentPort;
+            let stoppedPort;
+            let targetUpstream;
+            if (status === 'blue') {
+              currentUpstream = 'react_blue';
+              currentPort = '3000';
+              stoppedPort = '3001';
+              targetUpstream = 'react_green';
+            } else if (status === 'green') {
+              currentUpstream = 'react_green';
+              currentPort = '3001';
+              stoppedPort = '3000';
+              targetUpstream = 'react_blue';
+            } else {
+              console.error('Error: Unexpected status');
+              process.exit(1);
+            }
+  
+            // GitHub Actions 환경 변수로 설정
+            console.log('CURRENT_UPSTREAM:', currentUpstream);
+            console.log('CURRENT_PORT:', currentPort);
+            console.log('STOPPED_PORT:', stoppedPort);
+            console.log('TARGET_UPSTREAM:', targetUpstream);
+  
+            // GitHub Actions에 환경 변수를 설정하는 방식
+            console.log(`CURRENT_UPSTREAM=${currentUpstream}`);
+            console.log(`CURRENT_PORT=${currentPort}`);
+            console.log(`STOPPED_PORT=${stoppedPort}`);
+            console.log(`TARGET_UPSTREAM=${targetUpstream}`);
+  
+            // 환경 변수 GitHub Actions로 전달
+            process.stdout.write(`CURRENT_UPSTREAM=${currentUpstream}\n`);
+            process.stdout.write(`CURRENT_PORT=${currentPort}\n`);
+            process.stdout.write(`STOPPED_PORT=${stoppedPort}\n`);
+            process.stdout.write(`TARGET_UPSTREAM=${targetUpstream}\n`);
+  
+            await browser.close();
+          })();
+          " > puppeteer-script.js
+  
+          # Puppeteer 스크립트 실행
+          node puppeteer-script.js
+      
+      # - name: Set target IP # 커맨드 이름
+      #   run: |
+      #     STATUS=$(curl -o /dev/null -w "%{http_code}" "http://${{ secrets.REACT_DOCKER_IP }}/healthcheck/react_blue")
+      #     echo $STATUS
+      #     if [ $STATUS = 404 ]; then
+      #       CURRENT_UPSTREAM=react_blue
+      #     else
+      #       CURRENT_UPSTREAM=react_green
+      #     fi
+      #     echo CURRENT_UPSTREAM=$CURRENT_UPSTREAM >> $GITHUB_ENV
+      #     if [ $CURRENT_UPSTREAM = react_blue ]; then
+      #       echo "CURRENT_PORT=3000" >> $GITHUB_ENV
+      #       echo "STOPPED_PORT=3001" >> $GITHUB_ENV
+      #       echo "TARGET_UPSTREAM=react_green" >> $GITHUB_ENV
+      #     elif [ $CURRENT_UPSTREAM = react_green ]; then
+      #       echo "CURRENT_PORT=3001" >> $GITHUB_ENV
+      #       echo "STOPPED_PORT=3000" >> $GITHUB_ENV
+      #       echo "TARGET_UPSTREAM=react_blue" >> $GITHUB_ENV
+      #     else
+      #       echo "error"
+      #       exit 1
+      #     fi
           
       # - name: Get the health_check value from the HTML
       #   run: |
