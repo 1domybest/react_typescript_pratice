@@ -22,6 +22,18 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+
+   # 실행 중인 컨테이너 목록을 GitHub 로그에 출력
+      - name: List running Docker containers
+        run: |
+          echo "Listing running Docker containers..."
+          docker ps
+  
+      # DockerHub에 있는 이미지 목록을 GitHub 로그에 출력
+      - name: List DockerHub images
+        run: |
+          echo "Listing DockerHub images..."
+          docker images
       # - name: Set target IP based on running Docker container
       #   run: |
       #     # 현재 실행 중인 컨테이너 확인
