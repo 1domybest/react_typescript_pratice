@@ -92,24 +92,24 @@ jobs:
             else
               CURRENT_UPSTREAM=react_green
             fi
+            
+            # 값을 파일로 저장
+            echo $CURRENT_UPSTREAM > /tmp/current_upstream.txt
       
-            # GitHub Actions에 출력 변수 설정
-            echo "::set-output name=CURRENT_UPSTREAM::$CURRENT_UPSTREAM"
-      
-      - name: Set GitHub environment variables from SSH output
+      - name: Fetch SSH result and set environment variable
         run: |
-          # SSH에서 받아온 값을 디버그 출력으로 확인
-          echo "Debug: CURRENT_UPSTREAM=${{ steps.ssh_action.outputs.CURRENT_UPSTREAM }}"
-      
-          # 현재 값이 잘 출력되는지 확인하기 위한 디버그 출력
-          echo "CURRENT_UPSTREAM=${{ steps.ssh_action.outputs.CURRENT_UPSTREAM }}"
+          # SSH에서 가져온 값을 파일에서 읽기
+          CURRENT_UPSTREAM=$(cat /tmp/current_upstream.txt)
+          
+          # 환경 변수 설정
+          echo "CURRENT_UPSTREAM=$CURRENT_UPSTREAM" >> $GITHUB_ENV
       
           # 조건문으로 환경 변수 설정
-          if [ "${{ steps.ssh_action.outputs.CURRENT_UPSTREAM }}" = "react_blue" ]; then
+          if [ "$CURRENT_UPSTREAM" = "react_blue" ]; then
             echo "CURRENT_PORT=3000" >> $GITHUB_ENV
             echo "STOPPED_PORT=3001" >> $GITHUB_ENV
             echo "TARGET_UPSTREAM=react_green" >> $GITHUB_ENV
-          elif [ "${{ steps.ssh_action.outputs.CURRENT_UPSTREAM }}" = "react_green" ]; then
+          elif [ "$CURRENT_UPSTREAM" = "react_green" ]; then
             echo "CURRENT_PORT=3001" >> $GITHUB_ENV
             echo "STOPPED_PORT=3000" >> $GITHUB_ENV
             echo "TARGET_UPSTREAM=react_blue" >> $GITHUB_ENV
@@ -118,7 +118,6 @@ jobs:
             echo "STOPPED_PORT=unknown" >> $GITHUB_ENV
             echo "TARGET_UPSTREAM=unknown" >> $GITHUB_ENV
           fi
-          
               
       - name: Build Docker
         run: docker build --platform linux/amd64 -t ${{ secrets.DOCKERHUB_USERNAME }}/react_docker .
