@@ -68,10 +68,13 @@ jobs:
           script: |
             sudo docker pull ${{ secrets.DOCKERHUB_USERNAME }}/react_docker:latest
             sudo docker-compose -f docker-compose-${{ env.TARGET_UPSTREAM }}.yml up -d
-
+  
+      - name: Debug Docker Containers
+        run: |
+          echo "🔍 Listing all running containers..."
+          docker ps --format "table {{.ID}}\t{{.Names}}\t{{.Status}}"
 
       - name: Check if the TARGET_UPSTREAM container is running
-        id: check_container
         run: |
           ATTEMPT=0
           MAX_ATTEMPTS=3
@@ -80,10 +83,8 @@ jobs:
           while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
             echo "Attempt $((ATTEMPT+1)) - Checking if container '${{ env.TARGET_UPSTREAM }}' is running..."
             
-            # 실행 중인 컨테이너 찾기
-            RUNNING_CONTAINER=$(docker ps --filter "name=${{ env.TARGET_UPSTREAM }}" --format "{{.Names}}")
-  
-            if [ -n "$RUNNING_CONTAINER" ]; then
+            # 실행 중인 컨테이너 확인 (grep 사용)
+            if docker ps --format "{{.Names}}" | grep -q "^${{ env.TARGET_UPSTREAM }}$"; then
               echo "✅ Success: Container '${{ env.TARGET_UPSTREAM }}' is running!"
               exit 0
             fi
