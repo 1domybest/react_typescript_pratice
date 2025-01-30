@@ -31,7 +31,7 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             echo "Listing all Docker containers (running or stopped)..."
-            sudo docker ps -a
+            sudo docker ps
   
      # 실행 중인 컨테이너 목록을 GitHub 로그에 출력
       - name: List running Docker containers
