@@ -61,7 +61,7 @@ jobs:
           script: |
             # 현재 실행 중인 컨테이너 확인
             EXIST_BLUE=$(sudo docker ps --filter "name=react_blue" --format "{{.Names}}")
-      
+        
             # 실행 여부에 따라 CURRENT_UPSTREAM 결정
             if [ -z "$EXIST_BLUE" ]; then
               echo "react_blue is NOT running -> Setting CURRENT_UPSTREAM to react_blue"
@@ -70,10 +70,13 @@ jobs:
               echo "react_blue is running -> Setting CURRENT_UPSTREAM to react_green"
               CURRENT_UPSTREAM=react_green
             fi
-      
-            # GitHub 환경 변수 설정
+        
+            # GitHub 환경 변수 설정 (다시 수정)
             echo "CURRENT_UPSTREAM=$CURRENT_UPSTREAM" >> $GITHUB_ENV
-      
+            echo "CURRENT_PORT=3000" >> $GITHUB_ENV
+            echo "STOPPED_PORT=3001" >> $GITHUB_ENV
+            echo "TARGET_UPSTREAM=react_green" >> $GITHUB_ENV
+        
             # 설정된 CURRENT_UPSTREAM에 따라 포트 및 TARGET_UPSTREAM 값 설정
             if [ "$CURRENT_UPSTREAM" = "react_blue" ]; then
               echo "CURRENT_PORT=3000" >> $GITHUB_ENV
