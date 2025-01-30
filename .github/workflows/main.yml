@@ -90,14 +90,14 @@ jobs:
               CURRENT_UPSTREAM="react_green"
             fi
 
-            echo "current=$CURRENT_UPSTREAM" >> "$GITHUB_OUTPUT"
+            
+            echo "foo=bar" >> "$GITHUB_OUTPUT"
       
       - name: Fetch SSH result and set environment variable
         run: |
           # SSH에서 가져온 값을 파일에서 읽기
-          echo "RESULT = ${{ steps.ssh_action.outputs.current }}"
-          # # 환경 변수 설정
-          # echo "CURRENT_UPSTREAM=$CURRENT_UPSTREAM" >> $GITHUB_ENV
+          echo ${{ steps.set-foo.outputs.foo }}
+ 
       
           # # 조건문으로 환경 변수 설정
           # if [ "$CURRENT_UPSTREAM" = "react_blue" ]; then
