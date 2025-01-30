@@ -75,6 +75,7 @@ jobs:
       #     fi
 
       - name: SSH into the server and fetch container status
+        id: ssh_action
         uses: appleboy/ssh-action@v0.1.10
         with:
           host: ${{ secrets.REACT_DOCKER_IP }}
@@ -84,29 +85,31 @@ jobs:
           script: |
             # 현재 실행 중인 컨테이너 확인
             EXIST_BLUE=$(sudo docker ps --filter "name=react_blue" --format "{{.Names}}")
-            echo "Debug: EXIST_BLUE=$EXIST_BLUE"
+            
             # 실행 여부에 따라 CURRENT_UPSTREAM 결정
             if [ -z "$EXIST_BLUE" ]; then
               CURRENT_UPSTREAM=react_blue
             else
               CURRENT_UPSTREAM=react_green
             fi
-
+      
             # GitHub Actions에 출력 변수 설정
             echo "::set-output name=CURRENT_UPSTREAM::$CURRENT_UPSTREAM"
-
+      
       - name: Set GitHub environment variables from SSH output
         run: |
-          # SSH에서 받아온 CURRENT_UPSTREAM 값을 환경 변수에 저장
+          # SSH에서 받아온 값을 디버그 출력으로 확인
           echo "Debug: CURRENT_UPSTREAM=${{ steps.ssh_action.outputs.CURRENT_UPSTREAM }}"
-          echo "CURRENT_UPSTREAM=${{ steps.ssh_action.outputs.stdout }}" >> $GITHUB_ENV
-
+      
+          # 현재 값이 잘 출력되는지 확인하기 위한 디버그 출력
+          echo "CURRENT_UPSTREAM=${{ steps.ssh_action.outputs.CURRENT_UPSTREAM }}"
+      
           # 조건문으로 환경 변수 설정
-          if [ "$CURRENT_UPSTREAM" = "react_blue" ]; then
+          if [ "${{ steps.ssh_action.outputs.CURRENT_UPSTREAM }}" = "react_blue" ]; then
             echo "CURRENT_PORT=3000" >> $GITHUB_ENV
             echo "STOPPED_PORT=3001" >> $GITHUB_ENV
             echo "TARGET_UPSTREAM=react_green" >> $GITHUB_ENV
-          elif [ "$CURRENT_UPSTREAM" = "react_green" ]; then
+          elif [ "${{ steps.ssh_action.outputs.CURRENT_UPSTREAM }}" = "react_green" ]; then
             echo "CURRENT_PORT=3001" >> $GITHUB_ENV
             echo "STOPPED_PORT=3000" >> $GITHUB_ENV
             echo "TARGET_UPSTREAM=react_blue" >> $GITHUB_ENV
@@ -115,7 +118,6 @@ jobs:
             echo "STOPPED_PORT=unknown" >> $GITHUB_ENV
             echo "TARGET_UPSTREAM=unknown" >> $GITHUB_ENV
           fi
-
           
               
       - name: Build Docker
