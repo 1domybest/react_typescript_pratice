@@ -52,29 +52,26 @@ jobs:
       #       exit 1
       #     fi
 
-      - name: Set target IP based on running Docker container
+      - name: Set values in SSH
+        id: ssh_action
         uses: appleboy/ssh-action@v0.1.10
         with:
           host: ${{ secrets.REACT_DOCKER_IP }}
-          username: ${{ secrets.SSH_USER }}  # 예: 'ubuntu' 또는 EC2 사용자명
+          username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          debug: true  # 디버그 메시지를 활성화
           script: |
-            # 현재 실행 중인 컨테이너 확인
             EXIST_BLUE=$(sudo docker ps --filter "name=react_blue" --format "{{.Names}}")
-            
-            # 실행 여부에 따라 CURRENT_UPSTREAM 결정
             if [ -z "$EXIST_BLUE" ]; then
+              echo "react_blue is NOT running -> Setting CURRENT_UPSTREAM to react_blue"
               CURRENT_UPSTREAM=react_blue
             else
+              echo "react_blue is running -> Setting CURRENT_UPSTREAM to react_green"
               CURRENT_UPSTREAM=react_green
             fi
-      
-            # GitHub Actions에 전달할 값 출력 (stdout으로)
-            echo "CURRENT_UPSTREAM=$CURRENT_UPSTREAM"
-            echo "CURRENT_PORT=3000"
-            echo "STOPPED_PORT=3001"
-            echo "TARGET_UPSTREAM=react_green"
+            echo "::set-output name=CURRENT_UPSTREAM::$CURRENT_UPSTREAM"
+            echo "::set-output name=CURRENT_PORT::3000"
+            echo "::set-output name=STOPPED_PORT::3001"
+            echo "::set-output name=TARGET_UPSTREAM::react_green"
         
       - name: Set GitHub environment variables
         run: |
