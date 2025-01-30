@@ -66,9 +66,9 @@ FROM nginx:stable-alpine
 
 # 6-1. react_service-env.inc 파일이 없으면 생성하고, 있으면 값을 업데이트
 RUN if [ ! -f /etc/nginx/conf.d/react_service-env.inc ]; then \
-      echo "set \$container_name ${ENV};" > /etc/nginx/conf.d/react_service-env.inc; \
+      echo "set \$container_name ${CONTAINER_NAME};" > /etc/nginx/conf.d/react_service-env.inc; \
     else \
-      sed -i "s|set \$container_name .*|set \$container_name ${ENV};|" /etc/nginx/conf.d/react_service-env.inc; \
+      sed -i "s|set \$container_name .*|set \$container_name ${CONTAINER_NAME};|" /etc/nginx/conf.d/react_service-env.inc; \
     fi
 
 # 7. 빌드된 파일을 Nginx용으로 복사
