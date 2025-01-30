@@ -27,7 +27,7 @@ jobs:
       - name: List running Docker containers
         run: |
           echo "Listing running Docker containers..."
-          docker ps
+          docker ps -a
   
       # DockerHub에 있는 이미지 목록을 GitHub 로그에 출력
       - name: List DockerHub images
