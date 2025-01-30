@@ -68,38 +68,36 @@ jobs:
           script: |
             sudo docker pull ${{ secrets.DOCKERHUB_USERNAME }}/react_docker:latest
             sudo docker-compose -f docker-compose-${{ env.TARGET_UPSTREAM }}.yml up -d
-  
-      - name: Debug Docker Containers
-        run: |
-          echo "🔍 Listing all running containers..."
-          docker ps --format "table {{.ID}}\t{{.Names}}\t{{.Status}}"
 
-      - name: Check running containers on remote server
-        run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.REACT_DOCKER_IP }} "docker ps --format 'table {{.ID}}\t{{.Names}}\t{{.Status}}'"
 
-      - name: Check if the TARGET_UPSTREAM container is running
-        run: |
-          ATTEMPT=0
-          MAX_ATTEMPTS=3
-          RETRY_DELAY=10  # 10초 대기
+      - name: Check if TARGET_UPSTREAM container is running
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: ${{ secrets.REACT_DOCKER_IP }}
+          username: ${{ secrets.SSH_USER }}  # EC2 사용자명 (예: ubuntu, ec2-user)
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            ATTEMPT=0
+            MAX_ATTEMPTS=3
+            RETRY_DELAY=10  # 10초 대기
   
-          while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
-            echo "Attempt $((ATTEMPT+1)) - Checking if container '${{ env.TARGET_UPSTREAM }}' is running..."
-            
-            # 실행 중인 컨테이너 확인 (grep 사용)
-            if docker ps --format "{{.Names}}" | grep -q "^${{ env.TARGET_UPSTREAM }}$"; then
-              echo "✅ Success: Container '${{ env.TARGET_UPSTREAM }}' is running!"
-              exit 0
-            fi
-            
-            echo "⚠️ Container '${{ env.TARGET_UPSTREAM }}' is NOT running. Retrying in $RETRY_DELAY seconds..."
-            sleep $RETRY_DELAY
-            ATTEMPT=$((ATTEMPT+1))
-          done
+            while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
+              echo "Attempt $((ATTEMPT+1)) - Checking if container '${{ env.TARGET_UPSTREAM }}' is running..."
+              
+              # 실행 중인 컨테이너 목록에서 TARGET_UPSTREAM 확인
+              if docker ps --format '{{.Names}}' | grep -q "^${{ env.TARGET_UPSTREAM }}$"; then
+                echo "✅ Success: Container '${{ env.TARGET_UPSTREAM }}' is running!"
+                exit 0
+              fi
   
-          echo "❌ Error: Container '${{ env.TARGET_UPSTREAM }}' is still NOT running after $MAX_ATTEMPTS attempts!"
-          exit 1
+              echo "⚠️ Container '${{ env.TARGET_UPSTREAM }}' is NOT running. Retrying in $RETRY_DELAY seconds..."
+              sleep $RETRY_DELAY
+              ATTEMPT=$((ATTEMPT+1))
+            done
+  
+            echo "❌ Error: Container '${{ env.TARGET_UPSTREAM }}' is still NOT running after $MAX_ATTEMPTS attempts!"
+            exit 1
+
 
 
       - name: Change nginx upstream
