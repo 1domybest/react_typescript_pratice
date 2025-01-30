@@ -89,7 +89,7 @@ jobs:
             else
               echo "error"
               exit 1
-            fi
+              
       - name: Build Docker
         run: docker build --platform linux/amd64 -t ${{ secrets.DOCKERHUB_USERNAME }}/react_docker .
 
