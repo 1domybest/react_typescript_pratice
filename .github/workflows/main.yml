@@ -51,6 +51,7 @@ jobs:
       #       echo "error"
       #       exit 1
       #     fi
+
       - name: Set target IP based on running Docker container
         uses: appleboy/ssh-action@v0.1.10
         with:
@@ -61,34 +62,26 @@ jobs:
           script: |
             # 현재 실행 중인 컨테이너 확인
             EXIST_BLUE=$(sudo docker ps --filter "name=react_blue" --format "{{.Names}}")
-        
+            
             # 실행 여부에 따라 CURRENT_UPSTREAM 결정
             if [ -z "$EXIST_BLUE" ]; then
-              echo "react_blue is NOT running -> Setting CURRENT_UPSTREAM to react_blue"
               CURRENT_UPSTREAM=react_blue
             else
-              echo "react_blue is running -> Setting CURRENT_UPSTREAM to react_green"
               CURRENT_UPSTREAM=react_green
             fi
+      
+            # GitHub Actions에 전달할 값 출력 (stdout으로)
+            echo "CURRENT_UPSTREAM=$CURRENT_UPSTREAM"
+            echo "CURRENT_PORT=3000"
+            echo "STOPPED_PORT=3001"
+            echo "TARGET_UPSTREAM=react_green"
         
-            # GitHub 환경 변수 설정 (다시 수정)
-            echo "CURRENT_UPSTREAM=$CURRENT_UPSTREAM" | tee -a $GITHUB_ENV
-            echo "CURRENT_PORT=3000" | tee -a $GITHUB_ENV
-            echo "STOPPED_PORT=3001" | tee -a $GITHUB_ENV
-            echo "TARGET_UPSTREAM=react_green" | tee -a $GITHUB_ENV
-        
-            # 설정된 CURRENT_UPSTREAM에 따라 포트 및 TARGET_UPSTREAM 값 설정
-            if [ "$CURRENT_UPSTREAM" = "react_blue" ]; then
-              echo "CURRENT_PORT=3000" | tee -a $GITHUB_ENV
-              echo "STOPPED_PORT=3001" | tee -a $GITHUB_ENV
-              echo "TARGET_UPSTREAM=react_green" | tee -a $GITHUB_ENV
-            elif [ "$CURRENT_UPSTREAM" = "react_green" ]; then
-              echo "CURRENT_PORT=3001" | tee -a $GITHUB_ENV
-              echo "STOPPED_PORT=3000" | tee -a $GITHUB_ENV
-              echo "TARGET_UPSTREAM=react_blue" | tee -a $GITHUB_ENV
-            else
-              echo "error"
-              exit 1
+      - name: Set GitHub environment variables
+        run: |
+          echo "CURRENT_UPSTREAM=${{ steps.ssh_action.outputs.CURRENT_UPSTREAM }}" >> $GITHUB_ENV
+          echo "CURRENT_PORT=${{ steps.ssh_action.outputs.CURRENT_PORT }}" >> $GITHUB_ENV
+          echo "STOPPED_PORT=${{ steps.ssh_action.outputs.STOPPED_PORT }}" >> $GITHUB_ENV
+          echo "TARGET_UPSTREAM=${{ steps.ssh_action.outputs.TARGET_UPSTREAM }}" >> $GITHUB_ENV
               
       - name: Build Docker
         run: docker build --platform linux/amd64 -t ${{ secrets.DOCKERHUB_USERNAME }}/react_docker .
