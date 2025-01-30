@@ -19,112 +19,35 @@ jobs:
         run: |
           # Nginx 서버의 /env 엔드포인트에 curl 요청을 보냄
           response=$(curl -s http://${{ secrets.REACT_DOCKER_IP }}/env)
-
+      
           # 결과 확인
           echo "Received response: $response"
-
-          # 필요한 값을 환경 변수로 저장
-          echo "CONTAINER_NAME=$response" >> $GITHUB_ENV
-          
+      
+          # 응답 값을 환경 변수로 저장
+          echo "CURRENT_UPSTREAM=$response" >> $GITHUB_ENV
+      
+          # 조건에 맞는 값을 환경 변수로 설정
+          if [ "$CURRENT_UPSTREAM" = "react_blue" ]; then
+            echo "CURRENT_PORT=3000" >> $GITHUB_ENV
+            echo "STOPPED_PORT=3001" >> $GITHUB_ENV
+            echo "TARGET_UPSTREAM=react_green" >> $GITHUB_ENV
+          elif [ "$CURRENT_UPSTREAM" = "react_green" ]; then
+            echo "CURRENT_PORT=3001" >> $GITHUB_ENV
+            echo "STOPPED_PORT=3000" >> $GITHUB_ENV
+            echo "TARGET_UPSTREAM=react_blue" >> $GITHUB_ENV
+          else
+            echo "CURRENT_PORT=unknown" >> $GITHUB_ENV
+            echo "STOPPED_PORT=unknown" >> $GITHUB_ENV
+            echo "TARGET_UPSTREAM=unknown" >> $GITHUB_ENV
+          fi
 
       - name: Login to DockerHub
         uses: docker/login-action@v1
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-   # SSH로 EC2에 접속하여 실행 중인 컨테이너 목록 출력
-      - name: List all Docker containers (running or stopped)
-        uses: appleboy/ssh-action@v0.1.10
-        with:
-          host: ${{ secrets.REACT_DOCKER_IP }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          script: |
-            echo "Listing all Docker containers (running or stopped)..."
-            sudo docker ps
-  
-     # 실행 중인 컨테이너 목록을 GitHub 로그에 출력
-      - name: List running Docker containers
-        run: |
-          echo "Listing running Docker containers..."
-          docker ps -a
-  
-      # DockerHub에 있는 이미지 목록을 GitHub 로그에 출력
-      - name: List DockerHub images
-        run: |
-          echo "Listing DockerHub images..."
-          docker images
-      # - name: Set target IP based on running Docker container
-      #   run: |
-      #     # 현재 실행 중인 컨테이너 확인
-      #     EXIST_BLUE=$(docker ps --filter "name=react_blue" --format "{{.Names}}")
-
-      #     # 실행 여부에 따라 CURRENT_UPSTREAM 결정
-      #     if [ -z "$EXIST_BLUE" ]; then
-      #       echo "react_blue is NOT running -> Setting CURRENT_UPSTREAM to react_blue"
-      #       CURRENT_UPSTREAM=react_blue
-      #     else
-      #       echo "react_blue is running -> Setting CURRENT_UPSTREAM to react_green"
-      #       CURRENT_UPSTREAM=react_green
-      #     fi
-
-      #     # GitHub 환경 변수 설정
-      #     echo CURRENT_UPSTREAM=$CURRENT_UPSTREAM >> $GITHUB_ENV
-
-      #     if [ "$CURRENT_UPSTREAM" = "react_blue" ]; then
-      #       echo "CURRENT_PORT=3000" >> $GITHUB_ENV
-      #       echo "STOPPED_PORT=3001" >> $GITHUB_ENV
-      #       echo "TARGET_UPSTREAM=react_green" >> $GITHUB_ENV
-      #     elif [ "$CURRENT_UPSTREAM" = "react_green" ]; then
-      #       echo "CURRENT_PORT=3001" >> $GITHUB_ENV
-      #       echo "STOPPED_PORT=3000" >> $GITHUB_ENV
-      #       echo "TARGET_UPSTREAM=react_blue" >> $GITHUB_ENV
-      #     else
-      #       echo "error"
-      #       exit 1
-      #     fi
-
-      - name: SSH into the server and fetch container status
-        id: ssh_action
-        uses: appleboy/ssh-action@v0.1.10
-        with:
-          host: ${{ secrets.REACT_DOCKER_IP }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          debug: true
-          script: |
-            EXIST_BLUE=$(sudo docker ps --filter "name=react_blue" --format "{{.Names}}")
-            if [ -z "$EXIST_BLUE" ]; then
-              CURRENT_UPSTREAM="react_blue"
-            else
-              CURRENT_UPSTREAM="react_green"
-            fi
-
-            
-            echo "foo=bar" >> "$GITHUB_OUTPUT"
       
-      - name: Fetch SSH result and set environment variable
-        run: |
-          # SSH에서 가져온 값을 파일에서 읽기
-          echo ${{ steps.set-foo.outputs.foo }}
- 
-      
-          # # 조건문으로 환경 변수 설정
-          # if [ "$CURRENT_UPSTREAM" = "react_blue" ]; then
-          #   echo "CURRENT_PORT=3000" >> $GITHUB_ENV
-          #   echo "STOPPED_PORT=3001" >> $GITHUB_ENV
-          #   echo "TARGET_UPSTREAM=react_green" >> $GITHUB_ENV
-          # elif [ "$CURRENT_UPSTREAM" = "react_green" ]; then
-          #   echo "CURRENT_PORT=3001" >> $GITHUB_ENV
-          #   echo "STOPPED_PORT=3000" >> $GITHUB_ENV
-          #   echo "TARGET_UPSTREAM=react_blue" >> $GITHUB_ENV
-          # else
-          #   echo "CURRENT_PORT=unknown" >> $GITHUB_ENV
-          #   echo "STOPPED_PORT=unknown" >> $GITHUB_ENV
-          #   echo "TARGET_UPSTREAM=unknown" >> $GITHUB_ENV
-          # fi
-              
+
       - name: Build Docker
         run: docker build --platform linux/amd64 -t ${{ secrets.DOCKERHUB_USERNAME }}/react_docker .
 
@@ -142,35 +65,12 @@ jobs:
             sudo docker pull ${{ secrets.DOCKERHUB_USERNAME }}/react_docker:latest
             sudo docker-compose -f docker-compose-${{ env.TARGET_UPSTREAM }}.yml up -d
 
-
-      - name: Check if TARGET_UPSTREAM container is running
-        uses: appleboy/ssh-action@v0.1.10
+      - name: Check deploy server URL with dynamic target
+        uses: jtalk/url-health-check-action@v3
         with:
-          host: ${{ secrets.REACT_DOCKER_IP }}
-          username: ${{ secrets.SSH_USER }}  # 예: 'ubuntu' 또는 EC2 사용자명
-          key: ${{ secrets.EC2_SSH_KEY }}
-          debug: true  # 디버그 메시지를 활성화
-          script: |
-            ATTEMPT=0
-            MAX_ATTEMPTS=3
-            RETRY_DELAY=10  # 10초 대기
-      
-            while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
-              echo "Attempt $((ATTEMPT+1)) - Checking if container '${{ env.TARGET_UPSTREAM }}' is running..."
-              
-              # 실행 중인 컨테이너 목록에서 TARGET_UPSTREAM 확인
-              if sudo docker ps --format '{{.Names}}' | grep -q "^${{ env.TARGET_UPSTREAM }}$"; then
-                echo "✅ Success: Container '${{ env.TARGET_UPSTREAM }}' is running!"
-                exit 0
-              fi
-              echo "⚠️ Container '${{ env.TARGET_UPSTREAM }}' is NOT running. Retrying in $RETRY_DELAY seconds..."
-              sleep $RETRY_DELAY
-              ATTEMPT=$((ATTEMPT+1))
-            done
-      
-            echo "❌ Error: Container '${{ env.TARGET_UPSTREAM }}' is still NOT running after $MAX_ATTEMPTS attempts!"
-            exit 1
-
+          url: http://${{ secrets.REACT_DOCKER_IP }}/healthcheck/${{ env.TARGET_UPSTREAM }}
+          max-attempts: 3
+          retry-delay: 10s
 
       - name: Change nginx upstream
         uses: appleboy/ssh-action@master
