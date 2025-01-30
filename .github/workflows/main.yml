@@ -92,17 +92,15 @@ jobs:
               CURRENT_UPSTREAM=react_green
             fi
 
-            # GitHub Actions에 반환할 변수 출력
-            echo "CURRENT_UPSTREAM=${CURRENT_UPSTREAM}"
-            echo "CURRENT_PORT=3000"
-            echo "STOPPED_PORT=3001"
-            echo "TARGET_UPSTREAM=react_green"
+            # GitHub Actions에 출력 변수 설정
+            echo "::set-output name=CURRENT_UPSTREAM::$CURRENT_UPSTREAM"
 
       - name: Set GitHub environment variables from SSH output
         run: |
           # SSH에서 받아온 CURRENT_UPSTREAM 값을 환경 변수에 저장
+          echo "Debug: CURRENT_UPSTREAM=${{ steps.ssh_action.outputs.CURRENT_UPSTREAM }}"
           echo "CURRENT_UPSTREAM=${{ steps.ssh_action.outputs.stdout }}" >> $GITHUB_ENV
-          echo "Debug: CURRENT_UPSTREAM=${CURRENT_UPSTREAM}"
+
           # 조건문으로 환경 변수 설정
           if [ "$CURRENT_UPSTREAM" = "react_blue" ]; then
             echo "CURRENT_PORT=3000" >> $GITHUB_ENV
