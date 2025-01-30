@@ -21,11 +21,11 @@ jobs:
           response=$(curl -s http://${{ secrets.REACT_DOCKER_IP }}/env)
       
           # 결과 확인
-          echo "Received response: $response"
-      
-          # 응답 값을 환경 변수로 저장
-          echo "CURRENT_UPSTREAM=$response" >> $GITHUB_ENV
-      
+          CURRENT_UPSTREAM=$(echo "$response" | xargs)
+          
+          # 응답 값 출력
+          echo "Received response: $CURRENT_UPSTREAM"
+          
           # 조건에 맞는 값을 환경 변수로 설정
           if [ "$CURRENT_UPSTREAM" = "react_blue" ]; then
             echo "CURRENT_PORT=3000" >> $GITHUB_ENV
@@ -68,7 +68,7 @@ jobs:
       - name: Check deploy server URL with dynamic target
         uses: jtalk/url-health-check-action@v3
         with:
-          url: http://${{ secrets.REACT_DOCKER_IP }}/healthcheck/${{ env.TARGET_UPSTREAM }}
+          url: http://${{ secrets.REACT_DOCKER_IP }}/hc/${{ env.TARGET_UPSTREAM }}
           max-attempts: 3
           retry-delay: 10s
 
