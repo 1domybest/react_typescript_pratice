@@ -74,6 +74,10 @@ jobs:
           echo "🔍 Listing all running containers..."
           docker ps --format "table {{.ID}}\t{{.Names}}\t{{.Status}}"
 
+      - name: Check running containers on remote server
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.REACT_DOCKER_IP }} "docker ps --format 'table {{.ID}}\t{{.Names}}\t{{.Status}}'"
+
       - name: Check if the TARGET_UPSTREAM container is running
         run: |
           ATTEMPT=0
