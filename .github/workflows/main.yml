@@ -22,8 +22,18 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-
-   # 실행 중인 컨테이너 목록을 GitHub 로그에 출력
+   # SSH로 EC2에 접속하여 실행 중인 컨테이너 목록 출력
+      - name: List all Docker containers (running or stopped)
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: ${{ secrets.REACT_DOCKER_IP }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            echo "Listing all Docker containers (running or stopped)..."
+            sudo docker ps -a
+  
+     # 실행 중인 컨테이너 목록을 GitHub 로그에 출력
       - name: List running Docker containers
         run: |
           echo "Listing running Docker containers..."
