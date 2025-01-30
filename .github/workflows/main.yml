@@ -80,7 +80,7 @@ jobs:
             echo "Attempt $((ATTEMPT+1)) - Checking if container '${{ env.TARGET_UPSTREAM }}' is running..."
       
             # 실행 중인 컨테이너 확인
-            EXIST_CONTAINER=$(docker ps --filter "name=${{ env.TARGET_UPSTREAM }}" --format "{{.Names}}")
+            EXIST_CONTAINER=$(docker ps --filter "name=react_blue" --format "{{.Names}}")
       
             # 컨테이너가 실행 중이라면 exit 1
             if [ -n "$EXIST_CONTAINER" ]; then
