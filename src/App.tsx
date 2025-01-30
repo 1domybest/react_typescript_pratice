@@ -20,7 +20,6 @@ import CustomTextAlert from "./components/textAlert/CustomTextAlert.tsx";
 import LoginView from "./routes/Login/View/LoginView.tsx";
 import OAuth2SucceedView from "./components/bottomSheet/login/View/OAuth2SucceedView.tsx";
 import MainView from "./routes/Main/View/MainView.tsx";
-import ENV from "./routes/docker/ENV.tsx";
 
 const App = observer(() => {
     return (
@@ -40,7 +39,6 @@ const App = observer(() => {
                         <Route path="/" element={<LoginView />} />
                         <Route path="/oauth2/succeed" element={<OAuth2SucceedView />} />
                         <Route path="/main" element={<MainView someData={""} />} />
-                        <Route path="/healthcheck/env" element={<ENV/>} />
                     </Routes>
                 </Router>
             </div>

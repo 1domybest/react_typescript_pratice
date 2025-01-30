@@ -31,8 +31,15 @@ RUN npm run build --mode ${ENV}
 # 6. Nginx로 정적 파일을 서빙하는 단계
 FROM nginx:stable-alpine
 
+RUN if [ ! -f /etc/nginx/conf.d/react_service-env.inc ]; then \
+      echo "set \$container_name ${ENV};" > /etc/nginx/conf.d/react_service-env.inc; \
+    else \
+      sed -i "s|set \$container_name .*|set \$container_name ${ENV};|" /etc/nginx/conf.d/react_service-env.inc; \
+    fi \
+
 # 7. 빌드된 파일을 Nginx용으로 복사
 COPY default.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /app/dist /usr/share/nginx/html
+
 # 8. Nginx 실행
 CMD ["nginx", "-g", "daemon off;"]
