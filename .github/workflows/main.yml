@@ -90,7 +90,7 @@ jobs:
               CURRENT_UPSTREAM="react_green"
             fi
 
-            echo "current=CURRENT_UPSTREAM" >> "$GITHUB_OUTPUT"
+            echo "current=$CURRENT_UPSTREAM" >> "$GITHUB_OUTPUT"
       
       - name: Fetch SSH result and set environment variable
         run: |
