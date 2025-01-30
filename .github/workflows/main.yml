@@ -83,41 +83,36 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           debug: true
           script: |
-            # 현재 실행 중인 컨테이너 확인
             EXIST_BLUE=$(sudo docker ps --filter "name=react_blue" --format "{{.Names}}")
-            
-            # 실행 여부에 따라 CURRENT_UPSTREAM 결정
             if [ -z "$EXIST_BLUE" ]; then
-              CURRENT_UPSTREAM=react_blue
+              CURRENT_UPSTREAM="react_blue"
             else
-              CURRENT_UPSTREAM=react_green
+              CURRENT_UPSTREAM="react_green"
             fi
-            
-            # 값을 파일로 저장
-            echo $CURRENT_UPSTREAM > /tmp/current_upstream.txt
+
+            echo "current=CURRENT_UPSTREAM" >> "$GITHUB_OUTPUT"
       
       - name: Fetch SSH result and set environment variable
         run: |
           # SSH에서 가져온 값을 파일에서 읽기
-          CURRENT_UPSTREAM=$(cat /tmp/current_upstream.txt)
-          
-          # 환경 변수 설정
-          echo "CURRENT_UPSTREAM=$CURRENT_UPSTREAM" >> $GITHUB_ENV
+          echo "RESULT = ${{ steps.ssh_action.outputs.current }}"
+          # # 환경 변수 설정
+          # echo "CURRENT_UPSTREAM=$CURRENT_UPSTREAM" >> $GITHUB_ENV
       
-          # 조건문으로 환경 변수 설정
-          if [ "$CURRENT_UPSTREAM" = "react_blue" ]; then
-            echo "CURRENT_PORT=3000" >> $GITHUB_ENV
-            echo "STOPPED_PORT=3001" >> $GITHUB_ENV
-            echo "TARGET_UPSTREAM=react_green" >> $GITHUB_ENV
-          elif [ "$CURRENT_UPSTREAM" = "react_green" ]; then
-            echo "CURRENT_PORT=3001" >> $GITHUB_ENV
-            echo "STOPPED_PORT=3000" >> $GITHUB_ENV
-            echo "TARGET_UPSTREAM=react_blue" >> $GITHUB_ENV
-          else
-            echo "CURRENT_PORT=unknown" >> $GITHUB_ENV
-            echo "STOPPED_PORT=unknown" >> $GITHUB_ENV
-            echo "TARGET_UPSTREAM=unknown" >> $GITHUB_ENV
-          fi
+          # # 조건문으로 환경 변수 설정
+          # if [ "$CURRENT_UPSTREAM" = "react_blue" ]; then
+          #   echo "CURRENT_PORT=3000" >> $GITHUB_ENV
+          #   echo "STOPPED_PORT=3001" >> $GITHUB_ENV
+          #   echo "TARGET_UPSTREAM=react_green" >> $GITHUB_ENV
+          # elif [ "$CURRENT_UPSTREAM" = "react_green" ]; then
+          #   echo "CURRENT_PORT=3001" >> $GITHUB_ENV
+          #   echo "STOPPED_PORT=3000" >> $GITHUB_ENV
+          #   echo "TARGET_UPSTREAM=react_blue" >> $GITHUB_ENV
+          # else
+          #   echo "CURRENT_PORT=unknown" >> $GITHUB_ENV
+          #   echo "STOPPED_PORT=unknown" >> $GITHUB_ENV
+          #   echo "TARGET_UPSTREAM=unknown" >> $GITHUB_ENV
+          # fi
               
       - name: Build Docker
         run: docker build --platform linux/amd64 -t ${{ secrets.DOCKERHUB_USERNAME }}/react_docker .
