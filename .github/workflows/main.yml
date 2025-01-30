@@ -72,20 +72,20 @@ jobs:
             fi
         
             # GitHub 환경 변수 설정 (다시 수정)
-            echo "CURRENT_UPSTREAM=$CURRENT_UPSTREAM" >> $GITHUB_ENV
-            echo "CURRENT_PORT=3000" >> $GITHUB_ENV
-            echo "STOPPED_PORT=3001" >> $GITHUB_ENV
-            echo "TARGET_UPSTREAM=react_green" >> $GITHUB_ENV
+            echo "CURRENT_UPSTREAM=$CURRENT_UPSTREAM" | tee -a $GITHUB_ENV
+            echo "CURRENT_PORT=3000" | tee -a $GITHUB_ENV
+            echo "STOPPED_PORT=3001" | tee -a $GITHUB_ENV
+            echo "TARGET_UPSTREAM=react_green" | tee -a $GITHUB_ENV
         
             # 설정된 CURRENT_UPSTREAM에 따라 포트 및 TARGET_UPSTREAM 값 설정
             if [ "$CURRENT_UPSTREAM" = "react_blue" ]; then
-              echo "CURRENT_PORT=3000" >> $GITHUB_ENV
-              echo "STOPPED_PORT=3001" >> $GITHUB_ENV
-              echo "TARGET_UPSTREAM=react_green" >> $GITHUB_ENV
+              echo "CURRENT_PORT=3000" | tee -a $GITHUB_ENV
+              echo "STOPPED_PORT=3001" | tee -a $GITHUB_ENV
+              echo "TARGET_UPSTREAM=react_green" | tee -a $GITHUB_ENV
             elif [ "$CURRENT_UPSTREAM" = "react_green" ]; then
-              echo "CURRENT_PORT=3001" >> $GITHUB_ENV
-              echo "STOPPED_PORT=3000" >> $GITHUB_ENV
-              echo "TARGET_UPSTREAM=react_blue" >> $GITHUB_ENV
+              echo "CURRENT_PORT=3001" | tee -a $GITHUB_ENV
+              echo "STOPPED_PORT=3000" | tee -a $GITHUB_ENV
+              echo "TARGET_UPSTREAM=react_blue" | tee -a $GITHUB_ENV
             else
               echo "error"
               exit 1
