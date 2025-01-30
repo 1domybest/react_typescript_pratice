@@ -103,12 +103,12 @@ jobs:
           # SSH에서 받아온 CURRENT_UPSTREAM 값을 환경 변수에 저장
           echo "CURRENT_UPSTREAM=${{ steps.ssh_action.outputs.stdout }}" >> $GITHUB_ENV
           
-          # 현재 값에 따라 조건문을 사용하여 나머지 환경 변수 설정
-          if [ "${{ steps.ssh_action.outputs.stdout }}" = "react_blue" ]; then
+          # 조건문으로 환경 변수 설정
+          if [ "$CURRENT_UPSTREAM" = "react_blue" ]; then
             echo "CURRENT_PORT=3000" >> $GITHUB_ENV
             echo "STOPPED_PORT=3001" >> $GITHUB_ENV
             echo "TARGET_UPSTREAM=react_green" >> $GITHUB_ENV
-          elif [ "${{ steps.ssh_action.outputs.stdout }}" = "react_green" ]; then
+          elif [ "$CURRENT_UPSTREAM" = "react_green" ]; then
             echo "CURRENT_PORT=3001" >> $GITHUB_ENV
             echo "STOPPED_PORT=3000" >> $GITHUB_ENV
             echo "TARGET_UPSTREAM=react_blue" >> $GITHUB_ENV
