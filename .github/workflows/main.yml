@@ -84,7 +84,7 @@ jobs:
           script: |
             # 현재 실행 중인 컨테이너 확인
             EXIST_BLUE=$(sudo docker ps --filter "name=react_blue" --format "{{.Names}}")
-        
+            echo "Debug: EXIST_BLUE=$EXIST_BLUE"
             # 실행 여부에 따라 CURRENT_UPSTREAM 결정
             if [ -z "$EXIST_BLUE" ]; then
               CURRENT_UPSTREAM=react_blue
@@ -102,7 +102,7 @@ jobs:
         run: |
           # SSH에서 받아온 CURRENT_UPSTREAM 값을 환경 변수에 저장
           echo "CURRENT_UPSTREAM=${{ steps.ssh_action.outputs.stdout }}" >> $GITHUB_ENV
-          
+          echo "Debug: CURRENT_UPSTREAM=${CURRENT_UPSTREAM}"
           # 조건문으로 환경 변수 설정
           if [ "$CURRENT_UPSTREAM" = "react_blue" ]; then
             echo "CURRENT_PORT=3000" >> $GITHUB_ENV
