@@ -37,7 +37,7 @@ jobs:
       # 현재 열린 서버 확인
       - name: Fetch container name from Nginx
         run: |
-          response=$(curl -s --fail http://${{env.SERVER_IP}}:$REACT_HC_PORT/env || true)
+          response=$(curl -s --fail http://${{env.SERVER_IP}}:${{env.REACT_HC_PORT}}/env || true)
 
           if [ $? -ne 0 ] || [ -z "$response" ]; then
             echo "Curl request failed or returned empty, setting CURRENT_COLOR to BLUE"
@@ -87,7 +87,7 @@ jobs:
       # Docker Build & Push
       - name: Build and Push Docker Image
         run: |
-          IMAGE_NAME="${DOCKER_DOCKERHUB_USERNAME}/${PLATFORM}_${CURRENT_BRANCH}_${TARGET_COLOR}"
+          IMAGE_NAME="${{env.DOCKER_DOCKERHUB_USERNAME}}/${{env.PLATFORM}}_${{env.CURRENT_BRANCH}}_${{env.TARGET_COLOR}}"
           docker build --platform linux/amd64 \
             --build-arg COLOR=$TARGET_COLOR \
             -t $IMAGE_NAME:latest .
