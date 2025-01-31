@@ -1,10 +1,27 @@
 name: CI
+# 규칙
+# 플랫폼_브랜치_컬러
+# 서버에서 env로 호출했을때 받는건 단순 COLOR
+# docker_compose_플랫폼_브랜치_컬러.yml
+# upstream = 플랫폼_브랜치_컬러
+env:
+  SERVER_IP: ${{secrets.REACT_DOCKER_IP}}
+  EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
+  DOCKER_DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+  DOCKER_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+
+  PLATFORM: "react"
+  BLUE: "blue"
+  GREEN: "green"
+  BLUE_PORT: 3000
+  GREEN_PORT: 3001
+  REACT_HC_PORT: 81
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "qa", "prod" ]
   pull_request:
-    branches: [ "main" ]
+    branches: [ "qa", "prod" ]
 
 permissions:
   contents: read  # 읽기 권한 설정
@@ -15,82 +32,118 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+
+      # 트리거된 브랜치 명 저장
+      - name: Set CURRENT_BRANCH
+        run: |
+          echo "CURRENT_BRANCH=${{ github.ref_name }}" >> $GITHUB_ENV
+          echo "Triggered by branch: ${{ github.ref_name }}"
+
+      # 현재 열린서버 확인하기
       - name: Fetch container name from Nginx
         run: |
-          # Nginx 서버의 /env 엔드포인트에 curl 요청을 보냄
-          response=$(curl -s http://${{ secrets.REACT_DOCKER_IP }}/env)
+          # Nginx 서버의 react/env 엔드포인트에 curl 요청을 보냄
+          response=$(curl -s http://${{env.PLATFORM}}:${{env.REACT_HC_PORT}}/${{ env.SERVER_IP }}/env)
       
           # 결과 확인
-          CURRENT_UPSTREAM=$(echo "$response" | xargs)
+          CURRENT_COLOR=$(echo "$response" | xargs)
+          
+          # 현재 컬러 저장
+          echo "CURRENT_COLOR=$CURRENT_COLOR" >> $GITHUB_ENV
           
           # 응답 값 출력
-          echo "Received response: $CURRENT_UPSTREAM"
+          echo "Received response: $CURRENT_COLOR"
           
           # 조건에 맞는 값을 환경 변수로 설정
-          if [ "$CURRENT_UPSTREAM" = "react_blue" ]; then
-            echo "CURRENT_PORT=3000" >> $GITHUB_ENV
-            echo "STOPPED_PORT=3001" >> $GITHUB_ENV
-            echo "TARGET_UPSTREAM=react_green" >> $GITHUB_ENV
-          elif [ "$CURRENT_UPSTREAM" = "react_green" ]; then
-            echo "CURRENT_PORT=3001" >> $GITHUB_ENV
-            echo "STOPPED_PORT=3000" >> $GITHUB_ENV
-            echo "TARGET_UPSTREAM=react_blue" >> $GITHUB_ENV
+          if [ "$CURRENT_COLOR" = "${{env.BLUE}}" ]; then
+            echo "CURRENT_PORT=${{env.BLUE_PORT}}" >> $GITHUB_ENV
+          
+            echo "TARGET_PORT=${{env.GREEN_PORT}}" >> $GITHUB_ENV
+            echo "TARGET_COLOR=${{env.GREEN}}" >> $GITHUB_ENV
+          
+          elif [ "$CURRENT_COLOR" = ${{env.GREEN}} ]; then
+            echo "CURRENT_PORT=${{env.GREEN_PORT}}" >> $GITHUB_ENV
+          
+            echo "TARGET_COLOR=${{env.BLUE}}" >> $GITHUB_ENV
+            echo "TARGET_PORT=${{env.BLUE_PORT}}" >> $GITHUB_ENV
           else
             echo "CURRENT_PORT=unknown" >> $GITHUB_ENV
-            echo "STOPPED_PORT=unknown" >> $GITHUB_ENV
+            echo "TARGET_PORT=unknown" >> $GITHUB_ENV
             echo "TARGET_UPSTREAM=unknown" >> $GITHUB_ENV
           fi
 
+      # Node.js 설치
+      - name: Install Node.js 22.13.0
+        uses: actions/setup-node@v3
+        with:
+          node-version: '22.13.0'
+
+      # npm install
+      - name: Install Dependencies
+        run: npm install
+
+      # npm build --mode 브랜치.컬러
+      - name: Build
+        run: npm run build --mode ${{env.CURRENT_BRANCH}}.${{ env.TARGET_COLOR }} # dist 폴더 생성
+
+
+      # 도커 로그인
       - name: Login to DockerHub
         uses: docker/login-action@v1
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-      
+          username: ${{ env.DOCKER_DOCKERHUB_USERNAME }}
+          password: ${{ env.DOCKER_TOKEN }}
 
+
+      # 도커 push
       - name: Build Docker
-        run: docker build --platform linux/amd64 -t ${{ secrets.DOCKERHUB_USERNAME }}/react_docker .
+        run: |
+          docker build --platform linux/amd64 \
+            --build-arg COLOR=${{ env.TARGET_COLOR }} \
+            -t ${{ env.DOCKER_DOCKERHUB_USERNAME }}/${{env.PLATFORM}}_${{env.CURRENT_BRANCH}}_${{env.TARGET_COLOR}} .
 
-      - name: Push Docker
-        run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/react_docker:latest
-
+      # SSH 접속해서 docker compose 실행
       - name: Docker compose
         uses: appleboy/ssh-action@master
         with:
           username: ubuntu
-          host: ${{ secrets.REACT_DOCKER_IP }}
-          key: ${{ secrets.EC2_SSH_KEY }}
+          host: ${{ env.SERVER_IP }}
+          key: ${{ env.EC2_SSH_KEY }}
           script_stop: true
           script: |
-            sudo docker pull ${{ secrets.DOCKERHUB_USERNAME }}/react_docker:latest
-            sudo docker-compose -f docker-compose-${{ env.TARGET_UPSTREAM }}.yml up -d
+            sudo docker pull ${{ env.DOCKER_DOCKERHUB_USERNAME }}/react_docker:latest
+            sudo docker-compose -f docker-compose-${{ env.PLATFORM }}_${{ env.CURRENT_BRANCH }}_${{ env.TARGET_COLOR }}.yml up -d
 
+      # 실행한 서버 열렸는지 확인
       - name: Check deploy server URL with dynamic target
         uses: jtalk/url-health-check-action@v3
         with:
-          url: http://${{ secrets.REACT_DOCKER_IP }}/hc/${{ env.TARGET_UPSTREAM }}
+          url: http://${{ env.SERVER_IP }}:${{env.REACT_HC_PORT}}/${{env.PLATFORM}}/${{ env.CURRENT_BRANCH }}/${{env.TARGET_COLOR}}
           max-attempts: 3
           retry-delay: 10s
 
+
+      # nginxserver 에있는 url 변수값 변경
       - name: Change nginx upstream
         uses: appleboy/ssh-action@master
         with:
           username: ubuntu
-          host: ${{ secrets.REACT_DOCKER_IP }}
-          key: ${{ secrets.EC2_SSH_KEY }}
+          host: ${{ env.SERVER_IP }}
+          key: ${{ env.EC2_SSH_KEY }}
           script_stop: true
           script: |
-            sudo docker exec -i nginxserver bash -c 'echo "set \$react_service_url ${{ env.TARGET_UPSTREAM }};" > /etc/nginx/conf.d/react_service-env.inc && nginx -s reload'
+            sudo docker exec -i nginxserver bash -c 'echo "set \$react_service_url ${{env.PLATFORM}}_${{ env.CURRENT_BRANCH }}_${{env.TARGET_COLOR}};" > /etc/nginx/conf.d/react_service-env.inc && nginx -s reload'
 
+      # 열려있으면 기존 CURRENT_UPSTREAM 내리기
       - name: Stop current server
         uses: appleboy/ssh-action@master
         with:
           username: ubuntu
-          host: ${{ secrets.REACT_DOCKER_IP }}
-          key: ${{ secrets.EC2_SSH_KEY }}
+          host: ${{ env.SERVER_IP }}
+          key: ${{ env.EC2_SSH_KEY }}
           script_stop: true
           script: |
-            if sudo docker ps -a --format '{{.Names}}' | grep -q "^${{ env.CURRENT_UPSTREAM }}$"; then
-              sudo docker stop ${{ env.CURRENT_UPSTREAM }}
-              sudo docker rm ${{ env.CURRENT_UPSTREAM }}
+            if sudo docker ps -a --format '{{.Names}}' | grep -q "^${{ env.PLATFORM }}_${{ env.CURRENT_BRANCH }}_${{ env.CURRENT_COLOR }}$"; then
+              sudo docker stop ${{ env.PLATFORM }}_${{ env.CURRENT_BRANCH }}_${{ env.CURRENT_COLOR }}
+              sudo docker rm ${{ env.PLATFORM }}_${{ env.CURRENT_BRANCH }}_${{ env.CURRENT_COLOR }}
             fi

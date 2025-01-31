@@ -1,79 +1,28 @@
-## 1. Nginx 기반으로 빌드된 정적 파일 서빙
-#FROM nginx:stable-alpine
-#
-## 2. GitHub Actions에서 빌드된 dist 폴더를 Nginx에 복사
-#COPY default.conf /etc/nginx/conf.d/default.conf
-#COPY dist /usr/share/nginx/html
-## 3. Nginx 포트 오픈
-##EXPOSE 3000
-#
-## 4. Nginx 실행
-#CMD ["nginx", "-g", "daemon off;"]
+# 22.13.0-alpine
+# node 버전
 
+# 1. Nginx를 기반으로 환경 설정
+FROM nginx:alpine AS production
 
+# 2. 환경 변수 설정 파일 생성 (컨테이너 이름에 따라 설정)
+ARG COLOR
 
-# 1. Node.js 이미지로 Vite 빌드
-#FROM node:22.13.0-alpine AS build
-#
-## 2. 작업 디렉토리 설정
-#WORKDIR /app
-#
-## 3. 프로젝트 소스 복사
-#COPY . .
-#
-## 4. 의존성 설치 (Vite 포함)
-#RUN npm install
-##RUN npm install vite
-#
-## 5. 환경에 맞는 Vite 빌드 실행 (모드 이름을 ${ENV}로 전달)
-#RUN npm run build --mode ${ENV}
-#
-## 6. Nginx로 정적 파일을 서빙하는 단계
-#FROM nginx:stable-alpine
-#
-#RUN if [ ! -f /etc/nginx/conf.d/react_service-env.inc ]; then \
-#      echo "set \$container_name ${ENV};" > /etc/nginx/conf.d/react_service-env.inc; \
-#    else \
-#      sed -i "s|set \$container_name .*|set \$container_name ${ENV};|" /etc/nginx/conf.d/react_service-env.inc; \
-#    fi \
-#
-## 7. 빌드된 파일을 Nginx용으로 복사
-#COPY default.conf /etc/nginx/conf.d/default.conf
-#COPY --from=build /app/dist /usr/share/nginx/html
-#
-## 8. Nginx 실행
-#CMD ["nginx", "-g", "daemon off;"]
-
-
-# 1. Node.js 이미지로 Vite 빌드
-FROM node:22.13.0-alpine AS build
-
-# 2. 작업 디렉토리 설정
-WORKDIR /app
-
-# 3. 프로젝트 소스 복사
-COPY . .
-
-# 4. 의존성 설치 (Vite 포함)
-RUN npm install
-#RUN npm install vite
-
-# 5. 환경에 맞는 Vite 빌드 실행 (모드 이름을 ${ENV}로 전달)
-RUN npm run build --mode ${ENV}
-
-# 6. Nginx로 정적 파일을 서빙하는 단계
-FROM nginx:stable-alpine
-
-# 6-1. react_service-env.inc 파일이 없으면 생성하고, 있으면 값을 업데이트
-RUN if [ ! -f /etc/nginx/conf.d/react_service-env.inc ]; then \
-      echo "set \$container_name ${CONTAINER_NAME};" > /etc/nginx/conf.d/react_service-env.inc; \
+RUN if [ ! -f /etc/nginx/conf.d/react_service_env.inc ]; then \
+      echo "set \$color ${COLOR};" > /etc/nginx/conf.d/react_service_env.inc; \
     else \
-      sed -i "s|set \$container_name .*|set \$container_name ${CONTAINER_NAME};|" /etc/nginx/conf.d/react_service-env.inc; \
+      sed -i "s|set \$color .*|set \$color ${COLOR};|" /etc/nginx/conf.d/react_service_env.inc; \
     fi
 
-# 7. 빌드된 파일을 Nginx용으로 복사
+# 3. 기본 Nginx 설정 파일 복사
 COPY default.conf /etc/nginx/conf.d/default.conf
+
+# 4. 빌드된 React 앱을 Nginx의 서빙 디렉토리로 복사
+# GitHub에서 빌드한 결과물이 /app/dist에 저장되었으므로, 해당 파일을 Nginx로 복사합니다.
 COPY --from=build /app/dist /usr/share/nginx/html
 
-# 8. Nginx 실행
+# 5. Nginx 환경 변수 적용을 위한 envsubst
+RUN apk add --no-cache gettext && \
+    envsubst < /etc/nginx/conf.d/default.conf > /etc/nginx/conf.d/default.conf
+
+# 6. Nginx 실행
 CMD ["nginx", "-g", "daemon off;"]
