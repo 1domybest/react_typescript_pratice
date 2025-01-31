@@ -37,7 +37,7 @@ jobs:
       # 현재 열린 서버 확인
       - name: Fetch container name from Nginx
         run: |
-          response=$(curl -s --fail http://$SERVER_IP:$REACT_HC_PORT/env || true)
+          response=$(curl -s --fail http://${{env.SERVER_IP}}:$REACT_HC_PORT/env || true)
 
           if [ $? -ne 0 ] || [ -z "$response" ]; then
             echo "Curl request failed or returned empty, setting CURRENT_COLOR to BLUE"
