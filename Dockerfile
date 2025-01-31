@@ -16,8 +16,8 @@ COPY default.conf /etc/nginx/conf.d/default.conf
 COPY dist /usr/share/nginx/html
 
 # 5. Nginx 환경 변수 적용을 위한 envsubst
-RUN apk add --no-cache gettext && \
-    envsubst < /etc/nginx/conf.d/default.conf > /etc/nginx/conf.d/default.conf
+#RUN apk add --no-cache gettext && \
+#    envsubst < /etc/nginx/conf.d/default.conf > /etc/nginx/conf.d/default.conf
 
 # 6. Nginx 실행
 CMD ["nginx", "-g", "daemon off;"]
