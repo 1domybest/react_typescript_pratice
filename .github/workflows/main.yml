@@ -86,7 +86,7 @@ jobs:
 
       # npm build --mode 브랜치.컬러
       - name: Build
-        run: npm run build --mode ${{env.CURRENT_BRANCH}}.${{ env.TARGET_COLOR }} # dist 폴더 생성
+        run: vite build --mode ${{env.CURRENT_BRANCH}}.${{ env.TARGET_COLOR }} # dist 폴더 생성
 
 
       # 도커 로그인
