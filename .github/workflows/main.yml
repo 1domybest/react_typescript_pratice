@@ -75,7 +75,7 @@ jobs:
 
       # npm build --mode 브랜치.컬러
       - name: Build
-        run: npm run build -- --mode $CURRENT_BRANCH.$TARGET_COLOR
+        run: npm run build -- --mode ${{env.CURRENT_BRANCH}}.${{env.TARGET_COLOR}}
 
       # Docker 로그인
       - name: Login to DockerHub
