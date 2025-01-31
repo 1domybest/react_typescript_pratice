@@ -110,7 +110,7 @@ jobs:
       - name: Check deployed server URL
         uses: jtalk/url-health-check-action@v3
         with:
-          url: http://${{env.SERVER_IP}}:$REACT_HC_PORT/$PLATFORM/$CURRENT_BRANCH/$TARGET_COLOR
+          url: http://${{env.SERVER_IP}}:${{env.REACT_HC_PORT}}/${{env.PLATFORM}}/${{env.CURRENT_BRANCH}}/${{env.TARGET_COLOR}}
           max-attempts: 3
           retry-delay: 10s
 
@@ -135,7 +135,7 @@ jobs:
           key: ${{ env.EC2_SSH_KEY }}
           script_stop: true
           script: |
-            OLD_CONTAINER="${PLATFORM}_${CURRENT_BRANCH}_${CURRENT_COLOR}"
+            OLD_CONTAINER="${{env.PLATFORM}}_${{env.CURRENT_BRANCH}}_${{env.CURRENT_COLOR}}"
             if sudo docker ps -a --format '{{.Names}}' | grep -q "^$OLD_CONTAINER$"; then
               sudo docker stop $OLD_CONTAINER
               sudo docker rm $OLD_CONTAINER
