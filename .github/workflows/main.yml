@@ -49,6 +49,7 @@ jobs:
             if [ $? -ne 0 ]; then
               echo "Curl request failed, setting CURRENT_COLOR to BLUE" >> $GITHUB_ENV
               CURRENT_COLOR="${{env.BLUE}}"
+            echo "ERROR: Failed to fetch response from the server"  # 추가된 에러 메시지 출력
             else
               # 응답 받은 경우
               CURRENT_COLOR=$(echo "$response" | xargs)
