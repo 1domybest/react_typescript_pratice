@@ -43,34 +43,35 @@ jobs:
       - name: Fetch container name from Nginx
         run: |
           # Nginx 서버의 react/env 엔드포인트에 curl 요청을 보냄
-          response=$(curl -s http://${{env.SERVER_IP}}:${{env.REACT_HC_PORT}}/env)
-      
-          # 결과 확인
-          CURRENT_COLOR=$(echo "$response" | xargs)
-          
-          # 현재 컬러 저장
-          echo "CURRENT_COLOR=$CURRENT_COLOR" >> $GITHUB_ENV
-          
-          # 응답 값 출력
-          echo "Received response: $CURRENT_COLOR"
-          
-          # 조건에 맞는 값을 환경 변수로 설정
-          if [ "$CURRENT_COLOR" = "${{env.BLUE}}" ]; then
-            echo "CURRENT_PORT=${{env.BLUE_PORT}}" >> $GITHUB_ENV
-          
-            echo "TARGET_PORT=${{env.GREEN_PORT}}" >> $GITHUB_ENV
-            echo "TARGET_COLOR=${{env.GREEN}}" >> $GITHUB_ENV
-          
-          elif [ "$CURRENT_COLOR" = ${{env.GREEN}} ]; then
-            echo "CURRENT_PORT=${{env.GREEN_PORT}}" >> $GITHUB_ENV
-          
-            echo "TARGET_COLOR=${{env.BLUE}}" >> $GITHUB_ENV
-            echo "TARGET_PORT=${{env.BLUE_PORT}}" >> $GITHUB_ENV
-          else
-            echo "CURRENT_PORT=unknown" >> $GITHUB_ENV
-            echo "TARGET_PORT=unknown" >> $GITHUB_ENV
-            echo "TARGET_UPSTREAM=unknown" >> $GITHUB_ENV
-          fi
+            response=$(curl -s --fail http://${{env.SERVER_IP}}:${{env.REACT_HC_PORT}}/env)
+            
+            # curl이 실패했을 경우 처리
+            if [ $? -ne 0 ]; then
+              echo "Curl request failed, setting CURRENT_COLOR to BLUE" >> $GITHUB_ENV
+              CURRENT_COLOR="${{env.BLUE}}"
+            else
+              # 응답 받은 경우
+              CURRENT_COLOR=$(echo "$response" | xargs)
+              echo "Received response: $CURRENT_COLOR"
+            fi
+            
+            # 현재 컬러 저장
+            echo "CURRENT_COLOR=$CURRENT_COLOR" >> $GITHUB_ENV
+            
+            # 조건에 맞는 값을 환경 변수로 설정
+            if [ "$CURRENT_COLOR" = "${{env.BLUE}}" ]; then
+              echo "CURRENT_PORT=${{env.BLUE_PORT}}" >> $GITHUB_ENV
+              echo "TARGET_PORT=${{env.GREEN_PORT}}" >> $GITHUB_ENV
+              echo "TARGET_COLOR=${{env.GREEN}}" >> $GITHUB_ENV
+            elif [ "$CURRENT_COLOR" = ${{env.GREEN}} ]; then
+              echo "CURRENT_PORT=${{env.GREEN_PORT}}" >> $GITHUB_ENV
+              echo "TARGET_COLOR=${{env.BLUE}}" >> $GITHUB_ENV
+              echo "TARGET_PORT=${{env.BLUE_PORT}}" >> $GITHUB_ENV
+            else
+              echo "CURRENT_PORT=unknown" >> $GITHUB_ENV
+              echo "TARGET_PORT=unknown" >> $GITHUB_ENV
+              echo "TARGET_UPSTREAM=unknown" >> $GITHUB_ENV
+            fi
 
       # Node.js 설치
       - name: Install Node.js 22.13.0
