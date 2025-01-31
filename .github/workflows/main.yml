@@ -102,9 +102,9 @@ jobs:
           key: ${{ env.EC2_SSH_KEY }}
           script_stop: true
           script: |
-            IMAGE_NAME="${DOCKER_DOCKERHUB_USERNAME}/${PLATFORM}_${CURRENT_BRANCH}_${TARGET_COLOR}"
+            IMAGE_NAME="${DOCKER_DOCKERHUB_USERNAME}/${{env.PLATFORM}}_${{env.CURRENT_BRANCH}}_${{env.TARGET_COLOR}}"
             sudo docker pull $IMAGE_NAME:latest
-            sudo docker-compose -f docker_compose_${{env.PLATFORM}}_${CURRENT_BRANCH}_${TARGET_COLOR}.yml up -d
+            sudo docker-compose -f docker_compose_${{env.PLATFORM}}_${{env.CURRENT_BRANCH}}_${{env.TARGET_COLOR}}.yml up -d
 
       # 배포된 서버 확인
       - name: Check deployed server URL
@@ -123,7 +123,7 @@ jobs:
           key: ${{ env.EC2_SSH_KEY }}
           script_stop: true
           script: |
-            echo "set \$react_service_url ${PLATFORM}_${CURRENT_BRANCH}_${TARGET_COLOR};" | sudo tee /etc/nginx/conf.d/react_${CURRENT_BRANCH}_service_env.inc
+            echo "set \$react_service_url ${{env.PLATFORM}}_${{env.CURRENT_BRANCH}}_${{env.TARGET_COLOR}};" | sudo tee /etc/nginx/conf.d/react_${{env.CURRENT_BRANCH}}_service_env.inc
             sudo docker exec -i nginxserver nginx -s reload
 
       # 기존 서버 중지
