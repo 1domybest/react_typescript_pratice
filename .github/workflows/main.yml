@@ -123,7 +123,7 @@ jobs:
           key: ${{ env.EC2_SSH_KEY }}
           script_stop: true
           script: |
-            echo "set \$react_service_url ${{env.PLATFORM}}_${{env.CURRENT_BRANCH}}_${{env.TARGET_COLOR}};" | sudo tee /etc/nginx/conf.d/react_${{env.CURRENT_BRANCH}}_service_env.inc
+            echo "set \$react_service_url ${{env.PLATFORM}}_${{env.CURRENT_BRANCH}}_${{env.TARGET_COLOR}};" | sudo docker exec -i nginxserver tee /etc/nginx/conf.d/react_${{env.CURRENT_BRANCH}}_service_env.inc
             sudo docker exec -i nginxserver nginx -s reload
 
       # 기존 서버 중지
