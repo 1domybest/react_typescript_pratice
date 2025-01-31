@@ -104,7 +104,7 @@ jobs:
           script: |
             IMAGE_NAME="${DOCKER_DOCKERHUB_USERNAME}/${PLATFORM}_${CURRENT_BRANCH}_${TARGET_COLOR}"
             sudo docker pull $IMAGE_NAME:latest
-            sudo docker-compose -f docker_compose_${PLATFORM}_${CURRENT_BRANCH}_${TARGET_COLOR}.yml up -d
+            sudo docker-compose -f docker_compose_${{env.PLATFORM}}_${CURRENT_BRANCH}_${TARGET_COLOR}.yml up -d
 
       # 배포된 서버 확인
       - name: Check deployed server URL
