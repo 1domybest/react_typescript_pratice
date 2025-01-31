@@ -84,14 +84,14 @@ jobs:
       - name: vite
         run:
           npm install -D vite
-  
+
       # npm install
       - name: Install Dependencies
         run: npm install
 
       # npm build --mode 브랜치.컬러
       - name: Build
-        run: tsc && vite build --mode ${{env.CURRENT_BRANCH}}.${{ env.TARGET_COLOR }} # dist 폴더 생성
+        run: tsc && vite build -- --mode ${{env.CURRENT_BRANCH}}.${{ env.TARGET_COLOR }} # dist 폴더 생성
 
 
       # 도커 로그인

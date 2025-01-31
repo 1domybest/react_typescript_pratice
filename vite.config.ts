@@ -14,5 +14,12 @@ export default defineConfig(({ mode }) => {
     server: {
       port: serverPort
     },
+    build: {
+      rollupOptions: {
+        input: {
+          main: '/index.html', // 모든 모드에서 항상 src/index.html을 사용
+        }
+      }
+    },
   }
 });
