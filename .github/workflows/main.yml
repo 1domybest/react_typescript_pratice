@@ -43,7 +43,7 @@ jobs:
       - name: Fetch container name from Nginx
         run: |
           # Nginx 서버의 react/env 엔드포인트에 curl 요청을 보냄
-          response=$(curl -s http://${{env.PLATFORM}}:${{env.REACT_HC_PORT}}/${{ env.SERVER_IP }}/env)
+          response=$(curl -s http://${{env.SERVER_IP}}:${{env.REACT_HC_PORT}}/env)
       
           # 결과 확인
           CURRENT_COLOR=$(echo "$response" | xargs)
@@ -111,8 +111,8 @@ jobs:
           key: ${{ env.EC2_SSH_KEY }}
           script_stop: true
           script: |
-            sudo docker pull ${{ env.DOCKER_DOCKERHUB_USERNAME }}/react_docker:latest
-            sudo docker-compose -f docker-compose-${{ env.PLATFORM }}_${{ env.CURRENT_BRANCH }}_${{ env.TARGET_COLOR }}.yml up -d
+            sudo docker pull ${{ env.DOCKER_DOCKERHUB_USERNAME }}/${{env.PLATFORM}}_${{env.CURRENT_BRANCH}}_${{env.TARGET_COLOR}}:latest
+            sudo docker-compose -f docker_compose_${{ env.PLATFORM }}_${{ env.CURRENT_BRANCH }}_${{ env.TARGET_COLOR }}.yml up -d
 
       # 실행한 서버 열렸는지 확인
       - name: Check deploy server URL with dynamic target
@@ -132,7 +132,7 @@ jobs:
           key: ${{ env.EC2_SSH_KEY }}
           script_stop: true
           script: |
-            sudo docker exec -i nginxserver bash -c 'echo "set \$react_service_url ${{env.PLATFORM}}_${{ env.CURRENT_BRANCH }}_${{env.TARGET_COLOR}};" > /etc/nginx/conf.d/react_service-env.inc && nginx -s reload'
+            sudo docker exec -i nginxserver bash -c 'echo "set \$react_service_url ${{env.PLATFORM}}_${{ env.CURRENT_BRANCH }}_${{env.TARGET_COLOR}};" > /etc/nginx/conf.d/react_${{env.CURRENT_BRANCH}}_service_env.inc && nginx -s reload'
 
       # 열려있으면 기존 CURRENT_UPSTREAM 내리기
       - name: Stop current server
