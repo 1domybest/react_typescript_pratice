@@ -43,7 +43,7 @@ jobs:
       - name: Fetch container name from Nginx
         run: |
           # Nginx 서버의 react/env 엔드포인트에 curl 요청을 보냄
-            response=$(curl -s --fail http://${{env.SERVER_IP}}:${{env.REACT_HC_PORT}}/env)
+            response=$(curl -s --fail http://${{env.SERVER_IP}}:${{env.REACT_HC_PORT}}/env || true)
             
             # curl이 실패했을 경우 처리
             if [ $? -ne 0 ]; then
